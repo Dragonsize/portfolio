@@ -4,9 +4,6 @@
   "private": true,
   "description": "Public security portfolio and deterministic educational security labs",
   "type": "module",
-  "engines": {
-    "node": "20.x"
-  },
   "scripts": {
     "dev": "npm run dev:portfolio",
     "dev:portfolio": "vercel dev apps/portfolio --listen 3000",
