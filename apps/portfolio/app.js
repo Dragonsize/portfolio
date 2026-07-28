@@ -16,6 +16,14 @@ const PORTFOLIO = {
   pgp: { enabled: false, armoredKey: '' }
 };
 const $ = (selector) => document.querySelector(selector);
+const THEME_KEY = 'portfolio-theme';
+const themeToggle = $('#theme-toggle');
+const themeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+function storedTheme() { try { const value = localStorage.getItem(THEME_KEY); return value === 'dark' || value === 'light' ? value : null; } catch { return null; } }
+function applyTheme(theme, persist = false) { document.documentElement.dataset.theme = theme; themeToggle.textContent = `[ theme: ${theme} ]`; themeToggle.setAttribute('aria-pressed', String(theme === 'dark')); themeToggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`); if (persist) { try { localStorage.setItem(THEME_KEY, theme); } catch {} } }
+themeToggle.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
+themeMedia.addEventListener('change', (event) => { if (!storedTheme()) applyTheme(event.matches ? 'dark' : 'light'); });
+applyTheme(document.documentElement.dataset.theme === 'light' ? 'light' : 'dark');
 const output = $('#terminal-output'); const input = $('#terminal-input'); const dialog = $('#terminal-dialog');
 let opener = null; let history = []; let historyIndex = 0;
 function node(tag, text = '', className = '') { const el = document.createElement(tag); el.textContent = text; el.className = className; return el; }
