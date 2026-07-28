@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Security portfolio — research, tools, and educational lab design.">
+  <meta name="theme-color" content="#0b0f0d">
+  <meta property="og:title" content="Security Portfolio">
+  <meta property="og:description" content="Research, tools, and educational security lab design.">
+  <title>Security Portfolio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <canvas id="particle-canvas" aria-hidden="true"></canvas>
+  <header class="site-header"><nav class="nav" aria-label="Primary"><a class="brand" href="#top" aria-label="Portfolio home">portfolio<span>_</span></a><div class="nav-links"><a href="#work">Work</a><a href="#about">About</a><a href="#labs">Labs</a><a href="#contact">Contact</a></div><button id="open-terminal" class="terminal-trigger" type="button">Terminal <kbd>~</kbd></button></nav></header>
+  <main id="main">
+    <section id="top" class="hero section">
+      <div class="hero-copy"><p class="eyebrow">Security research · tool building · lab design</p><h1>Build safer systems.<br><span>Show the work.</span></h1><p class="lede">Editable portfolio framework for verified security research, technical projects, and educational lab design. Replace placeholders before publishing.</p><div class="actions"><a class="button" href="#work">View selected work</a><a class="button button-quiet" id="labs-link" href="https://labs.example.com">Open learning labs ↗</a></div></div>
+      <section class="terminal-preview" aria-label="Portfolio terminal preview"><div class="terminal-bar"><span class="dots" aria-hidden="true">● ● ●</span><span>portfolio.term</span></div><div class="preview-body"><p><b>visitor@portfolio:~$</b> whoami</p><p class="muted">Security practitioner — editable profile</p><p><b>visitor@portfolio:~$</b> help</p><p class="muted">Try terminal for projects, skills, labs, and contact links.</p><p><b>visitor@portfolio:~$</b> <span class="cursor">_</span></p></div></section>
+    </section>
+    <section id="work" class="section"><header class="section-heading"><p class="eyebrow">Selected work</p><h2>Projects with clear scope.</h2><p>Draft entries. Replace claims, outcomes, and URLs with verified information.</p></header><div id="project-grid" class="project-grid"></div></section>
+    <section id="about" class="section about-grid"><div><p class="eyebrow">About</p><h2>Evidence over noise.</h2></div><div class="prose"><p>Use this block for a short, verifiable professional profile. Describe areas of practice, responsible disclosure approach, and work you can publicly support.</p><p>Keep certifications, metrics, client work, affiliations, and research claims out until they are accurate and approved for public release.</p></div><div class="skills-card"><h3>Working areas</h3><ul id="skills-list"></ul></div></section>
+    <section id="labs" class="section labs-callout"><div><p class="eyebrow">Learning labs</p><h2>Study concepts without touching real targets.</h2><p>Separate deployment. Deterministic fixtures only. No real credentials, network requests, filesystem access, or executable user payloads.</p></div><a id="labs-cta" class="button" href="https://labs.example.com">Launch labs ↗</a></section>
+    <section id="contact" class="section contact"><header class="section-heading"><p class="eyebrow">Contact</p><h2>Links, not a fake form.</h2><p>Set real destinations in portfolio configuration before launch.</p></header><div id="contact-links" class="contact-links"></div></section>
+  </main>
+  <footer class="footer"><span>Built as a public portfolio starter.</span><a href="/robots.txt">robots.txt</a><a href="/sitemap.xml">sitemap.xml</a></footer>
+  <dialog id="terminal-dialog" class="terminal-dialog" aria-labelledby="terminal-title"><section class="terminal"><header class="terminal-bar"><span class="dots" aria-hidden="true">● ● ●</span><span id="terminal-title">portfolio terminal</span><button id="close-terminal" type="button" aria-label="Close terminal">×</button></header><div id="terminal-output" class="terminal-output" role="log" aria-live="polite"></div><form id="terminal-form" class="terminal-form"><label class="prompt" for="terminal-input">visitor@portfolio:~$</label><input id="terminal-input" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Terminal command"></form></section></dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
