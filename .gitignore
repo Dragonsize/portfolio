@@ -1,29 +1,51 @@
-# Dependencies
+# Dependencies and package caches
 node_modules/
+.pnpm-store/
+.npm/
+.yarn/
 
-# Vercel
-.vercel/
-apps/*/.vercel/
-
-# Environment files
-.env
-.env.*
-!.env.example
-
-# Tests and reports
+# Build output and tooling caches
+dist/
+build/
+.vite/
+*.tsbuildinfo
 coverage/
 playwright-report/
 test-results/
 
-# Logs
+# Vercel state
+.vercel/
+apps/*/.vercel/
+
+# Environment files and local overrides
+.env
+.env.*
+!.env.example
+*.local
+
+# Logs and debug output
 *.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# OS/editor state
+# OS and editor state
 .DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
 
-# Machine-local Claude permissions
+# Claude local state and temporary worktrees
 .claude/settings.local.json
+.claude/worktrees/
+
+# Local frontend design-template reference
+a/
+
+# Temporary files
+*.tmp
+*.swp
+*~

@@ -1,205 +1,41 @@
+const EDIT = (field) => `[EDIT: ${field}]`;
 const PORTFOLIO = {
-  labsUrl: 'http://localhost:3001/',
-  projects: [
-    { id: 'research-tool', title: 'Research tool', summary: 'Replace with verified scope, outcome, and implementation details.', tags: ['Security', 'Tooling'], details: '', evidence: [] },
-    { id: 'case-study', title: 'Case study', summary: 'Replace with an approved write-up, repository, or public demonstration.', tags: ['Research', 'Writing'], details: '', evidence: [] },
-    { id: 'lab-design', title: 'Lab design', summary: 'Replace with a verified example of educational scenario design or platform work.', tags: ['Education', 'Web'], details: '', evidence: [] }
+  identity: { handle: EDIT('HANDLE'), name: EDIT('DISPLAY NAME'), role: EDIT('ROLE / FOCUS'), availability: EDIT('AVAILABILITY OR INQUIRY POLICY'), summary: EDIT('APPROVED PUBLIC SUMMARY'), footerNotice: EDIT('RESPONSIBLE-USE NOTICE') },
+  labs: { href: '', label: EDIT('LEARNING-LABS URL') },
+  skillGroups: [
+    { id: 'offensive', title: 'Offensive security', items: [{ name: EDIT('OFFENSIVE-SECURITY CAPABILITY'), evidence: EDIT('SCOPE OR EVIDENCE') }] },
+    { id: 'defensive', title: 'Defensive security', items: [{ name: EDIT('DEFENSIVE-SECURITY CAPABILITY'), evidence: EDIT('SCOPE OR EVIDENCE') }] },
+    { id: 'cloud', title: 'Cloud and infrastructure security', items: [{ name: EDIT('CLOUD OR INFRASTRUCTURE CAPABILITY'), evidence: EDIT('SCOPE OR EVIDENCE') }] }
   ],
-  practiceGroups: [
-    { title: 'Application security', items: ['Web application security', 'Secure design review'] },
-    { title: 'Technical work', items: ['Security tooling', 'Technical writing'] },
-    { title: 'Learning design', items: ['Educational lab design'] }
-  ],
-  publicRecord: [],
-  contacts: [
-    { label: 'GitHub — replace URL', href: 'https://github.com/your-handle' },
-    { label: 'LinkedIn — replace URL', href: 'https://www.linkedin.com/in/your-handle/' },
-    { label: 'Email — replace address', href: 'mailto:you@example.com' }
-  ]
+  projects: [{ id: 'project-01', title: EDIT('PROJECT OR RESEARCH TITLE'), status: EDIT('PUBLICATION STATUS'), year: EDIT('YEAR'), summary: EDIT('APPROVED HIGH-LEVEL SCOPE AND OUTCOME'), details: EDIT('OPTIONAL APPROVED TECHNICAL DETAILS'), tags: [EDIT('TECHNOLOGY OR TOPIC')], evidence: [{ label: EDIT('PUBLIC EVIDENCE LABEL'), href: '' }] }],
+  competitions: [{ competition: EDIT('COMPETITION OR EVENT'), placement: EDIT('RESULT'), category: EDIT('CATEGORY'), year: EDIT('YEAR'), evidence: EDIT('PUBLIC-EVIDENCE NOTE'), href: '' }],
+  communityProfiles: [{ label: EDIT('SECURITY PLATFORM OR COMMUNITY'), value: EDIT('PUBLIC PROFILE OR STATUS'), href: '' }],
+  certifications: [{ name: EDIT('CERTIFICATION ABBREVIATION'), fullName: EDIT('CERTIFICATION NAME'), issuer: EDIT('ISSUER'), year: EDIT('YEAR'), href: '' }],
+  experience: [{ period: EDIT('DATE RANGE'), role: EDIT('ROLE'), organization: EDIT('ORGANIZATION'), description: EDIT('APPROVED HIGH-LEVEL SUMMARY'), href: '' }],
+  contacts: [{ label: EDIT('CONTACT CHANNEL'), href: '' }],
+  pgp: { enabled: false, armoredKey: '' }
 };
-
 const $ = (selector) => document.querySelector(selector);
-const output = $('#terminal-output');
-const input = $('#terminal-input');
-const dialog = $('#terminal-dialog');
-const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-let opener = null;
-let history = [];
-let historyIndex = 0;
-
-function textNode(tag, className = '', text = '') {
-  const node = document.createElement(tag);
-  node.className = className;
-  node.textContent = text;
-  return node;
-}
-
-function validLink(value) {
-  try {
-    const url = new URL(value, window.location.href);
-    return ['https:', 'mailto:'].includes(url.protocol);
-  } catch { return false; }
-}
-
-function externalLink(label, href, className = '') {
-  if (!validLink(href)) return null;
-  const link = textNode('a', className, label);
-  link.href = href;
-  if (href.startsWith('https:')) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
-  return link;
-}
-
-function renderProjects() {
-  const projectGrid = $('#project-grid');
-  projectGrid.replaceChildren();
-  PORTFOLIO.projects.forEach((project) => {
-    const card = textNode('article', 'project');
-    const tags = textNode('div', 'tags');
-    project.tags.forEach((tag) => tags.append(textNode('span', 'tag', tag)));
-    card.append(textNode('h3', '', project.title), textNode('p', 'project-summary', project.summary), tags);
-
-    if (project.details || project.evidence?.length) {
-      const details = textNode('details', 'project-details');
-      const summary = textNode('summary', '', 'Show project scope');
-      details.append(summary);
-      if (project.details) details.append(textNode('p', '', project.details));
-      const evidence = textNode('div', 'evidence-links');
-      project.evidence.forEach(({ label, href }) => {
-        const link = externalLink(label, href);
-        if (link) evidence.append(link);
-      });
-      if (evidence.childElementCount) details.append(evidence);
-      card.append(details);
-    }
-    projectGrid.append(card);
-  });
-}
-
-function renderPractice() {
-  const container = $('#practice-groups');
-  container.replaceChildren();
-  PORTFOLIO.practiceGroups.forEach((group) => {
-    const card = textNode('section', 'practice-card');
-    const list = textNode('ul', 'practice-list');
-    group.items.forEach((item) => list.append(textNode('li', '', item)));
-    card.append(textNode('h3', '', group.title), list);
-    container.append(card);
-  });
-}
-
-function renderRecord() {
-  const section = $('#record');
-  const list = $('#record-list');
-  list.replaceChildren();
-  if (!PORTFOLIO.publicRecord.length) { section.classList.add('hidden'); return; }
-  PORTFOLIO.publicRecord.forEach((entry) => {
-    const item = textNode('li', 'record-item');
-    const heading = textNode('h3', '', `${entry.year} — ${entry.title}`);
-    item.append(heading, textNode('p', '', entry.description));
-    const link = externalLink('View public evidence ↗', entry.href || '');
-    if (link) item.append(link);
-    list.append(item);
-  });
-  section.classList.remove('hidden');
-}
-
-function renderContacts() {
-  const contacts = $('#contact-links');
-  contacts.replaceChildren();
-  PORTFOLIO.contacts.forEach((contact) => {
-    const link = externalLink(contact.label, contact.href, 'contact-link');
-    if (link) contacts.append(link);
-  });
-}
-
-function renderPortfolio() {
-  renderProjects();
-  renderPractice();
-  renderRecord();
-  renderContacts();
-  ['#labs-link', '#labs-cta'].forEach((selector) => { $(selector).href = PORTFOLIO.labsUrl; });
-}
-
-function print(message, type = 'terminal-response') {
-  output.append(textNode('div', `terminal-line ${type}`, message));
-  output.scrollTop = output.scrollHeight;
-}
-
-function openTerminal(source) {
-  opener = source || document.activeElement;
-  dialog.showModal();
-  if (!output.childElementCount) print('Portfolio terminal ready. Type help for commands.');
-  input.focus();
-}
-
-function closeTerminal() { dialog.close(); opener?.focus(); }
-
-function scrollToSection(id) {
-  const target = document.getElementById(id);
-  if (!target) return false;
-  target.scrollIntoView({ behavior: motionQuery.matches ? 'auto' : 'smooth' });
-  return true;
-}
-
-const commands = {
-  help: () => 'Commands: about, skills, projects, project <id>, contact, labs, open <section>, status, clear, date, echo <text>, exit',
-  about: () => { scrollToSection('about'); return 'Opened practice section.'; },
-  skills: () => PORTFOLIO.practiceGroups.flatMap((group) => [`${group.title}:`, ...group.items.map((item) => `  ${item}`)]).join('\n'),
-  projects: () => PORTFOLIO.projects.map((project) => `${project.id} — ${project.title}`).join('\n'),
-  project: (args) => { const project = PORTFOLIO.projects.find((item) => item.id === args.trim()); if (!project) return 'Unknown project. Run projects for available IDs.'; scrollToSection('work'); return `${project.title}: ${project.summary}`; },
-  contact: () => { scrollToSection('contact'); return 'Opened contact links.'; },
-  labs: () => { window.open(PORTFOLIO.labsUrl, '_blank', 'noopener'); return 'Opened learning labs in a new tab.'; },
-  open: (args) => scrollToSection(args.trim()) ? `Opened ${args.trim()}.` : 'Known sections: work, about, labs, contact.',
-  status: () => 'Portfolio online. Labs are isolated deterministic simulations.',
-  clear: () => { output.replaceChildren(); return null; },
-  date: () => new Date().toLocaleString(),
-  echo: (args) => args,
-  exit: () => { window.setTimeout(closeTerminal, 0); return 'Closing terminal.'; }
-};
-
-function execute(raw) {
-  const [command = '', ...rest] = raw.trim().match(/(?:[^\s"]+|"[^"]*")+/g) || [];
-  const args = rest.join(' ').replaceAll(/^"|"$/g, '');
-  print(`visitor@portfolio:~$ ${raw}`, 'terminal-command');
-  const handler = commands[command.toLowerCase()];
-  const result = handler ? handler(args) : `command not found: ${command}`;
-  if (result !== null && result !== undefined) print(result);
-}
-
-function focusableNodes() { return [...dialog.querySelectorAll('button,input,[href]')].filter((node) => !node.disabled); }
-
-function setupNavigation() {
-  if (!('IntersectionObserver' in window)) return;
-  const links = [...document.querySelectorAll('.nav-links a')];
-  const map = new Map(links.map((link) => [link.getAttribute('href')?.slice(1), link]));
-  const observer = new IntersectionObserver((entries) => {
-    const active = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-    if (!active) return;
-    links.forEach((link) => { link.classList.remove('active'); link.removeAttribute('aria-current'); });
-    const link = map.get(active.target.id);
-    if (link) { link.classList.add('active'); link.setAttribute('aria-current', 'page'); }
-  }, { rootMargin: '-28% 0px -60% 0px', threshold: [0, 0.1, 0.5] });
-  ['work', 'about', 'labs', 'contact'].forEach((id) => observer.observe(document.getElementById(id)));
-}
-
-$('#open-terminal').addEventListener('click', (event) => openTerminal(event.currentTarget));
-$('#close-terminal').addEventListener('click', closeTerminal);
-dialog.addEventListener('click', (event) => { if (event.target === dialog) closeTerminal(); });
-dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeTerminal(); });
-dialog.addEventListener('keydown', (event) => {
-  if (event.key !== 'Tab') return;
-  const nodes = focusableNodes(); const first = nodes[0]; const last = nodes.at(-1);
-  if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
-  if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
-});
-$('#terminal-form').addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value) return; execute(value); history.push(value); historyIndex = history.length; input.value = ''; });
-input.addEventListener('keydown', (event) => {
-  if (event.key === 'ArrowUp') { event.preventDefault(); if (historyIndex > 0) input.value = history[--historyIndex]; }
-  if (event.key === 'ArrowDown') { event.preventDefault(); if (historyIndex < history.length - 1) input.value = history[++historyIndex]; else { historyIndex = history.length; input.value = ''; } }
-  if (event.key === 'Tab') { event.preventDefault(); const value = input.value.trim().toLowerCase(); const matches = Object.keys(commands).filter((name) => name.startsWith(value)); if (matches.length === 1) input.value = `${matches[0]} `; else if (matches.length) print(matches.join('  ')); }
-  if (event.ctrlKey && event.key.toLowerCase() === 'l') { event.preventDefault(); output.replaceChildren(); }
-});
-document.addEventListener('keydown', (event) => { const editable = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName); if ((event.key === '~' || event.key === '`') && !editable && !dialog.open) { event.preventDefault(); openTerminal(document.activeElement); } });
-
-renderPortfolio();
-setupNavigation();
+const output = $('#terminal-output'); const input = $('#terminal-input'); const dialog = $('#terminal-dialog');
+let opener = null; let history = []; let historyIndex = 0;
+function node(tag, text = '', className = '') { const el = document.createElement(tag); el.textContent = text; el.className = className; return el; }
+function url(value, protocols) { try { const parsed = new URL(value); return protocols.includes(parsed.protocol) ? parsed : null; } catch { return null; } }
+function link(label, href, className = '', protocols = ['https:', 'mailto:']) { const parsed = url(href, protocols); if (!parsed) return null; const a = node('a', label, className); a.href = parsed.href; if (parsed.protocol === 'https:') { a.target = '_blank'; a.rel = 'noopener noreferrer'; } return a; }
+function placeholder(text, className = 'placeholder') { return node('span', text, className); }
+function renderHero() { $('#identity-name').textContent = PORTFOLIO.identity.name; $('#identity-role').textContent = PORTFOLIO.identity.role; $('#identity-summary').textContent = PORTFOLIO.identity.summary; $('#identity-availability').textContent = PORTFOLIO.identity.availability; $('#footer-notice').textContent = PORTFOLIO.identity.footerNotice; const transcript = $('#hero-transcript'); transcript.replaceChildren(node('p', `handle: ${PORTFOLIO.identity.handle}`), node('p', `role: ${PORTFOLIO.identity.role}`), node('p', `status: ${PORTFOLIO.identity.availability}`)); const labs = link(`> ${PORTFOLIO.labs.label}`, PORTFOLIO.labs.href, 'button quiet', ['https:']); const labsTarget = $('#labs-link'); if (labs) labsTarget.replaceWith(labs), labs.id = 'labs-link'; else { labsTarget.removeAttribute('href'); labsTarget.textContent = '> LABS URL REQUIRED'; labsTarget.classList.add('disabled'); } }
+let activeSkill = 0;
+function renderSkills() { const tabs = $('#skill-tabs'); const panel = $('#skill-panel'); tabs.replaceChildren(); const paint = () => { const group = PORTFOLIO.skillGroups[activeSkill]; panel.replaceChildren(); const title = node('h3', group.title); const list = document.createElement('ul'); group.items.forEach((item) => { const li = document.createElement('li'); li.append(node('strong', item.name), node('span', ` — ${item.evidence}`, 'muted')); list.append(li); }); panel.append(title, list, node('p', `analysis: ${EDIT('REPLACE WITH VERIFIED CONTEXT')}`, 'placeholder')); [...tabs.children].forEach((tab, index) => { tab.setAttribute('aria-selected', String(index === activeSkill)); tab.tabIndex = index === activeSkill ? 0 : -1; }); };
+  PORTFOLIO.skillGroups.forEach((group, index) => { const tab = node('button', `[${index + 1}] ${group.title}`, 'skill-tab'); tab.type = 'button'; tab.role = 'tab'; tab.id = `skill-tab-${index}`; tab.setAttribute('aria-controls', 'skill-panel'); tab.addEventListener('click', () => { activeSkill = index; paint(); }); tab.addEventListener('keydown', (event) => { const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End']; if (!keys.includes(event.key)) return; event.preventDefault(); if (event.key === 'Home') activeSkill = 0; else if (event.key === 'End') activeSkill = PORTFOLIO.skillGroups.length - 1; else activeSkill = (activeSkill + (event.key === 'ArrowRight' ? 1 : -1) + PORTFOLIO.skillGroups.length) % PORTFOLIO.skillGroups.length; paint(); tabs.children[activeSkill].focus(); }); tabs.append(tab); }); panel.role = 'tabpanel'; panel.setAttribute('aria-labelledby', 'skill-tab-0'); paint(); }
+function renderProjects() { const grid = $('#project-grid'); grid.replaceChildren(); PORTFOLIO.projects.forEach((project) => { const card = node('article', '', 'card'); card.append(node('p', `[${project.status}] ${project.year}`, 'meta'), node('h3', project.title), node('p', project.summary)); const tags = node('div', '', 'tags'); project.tags.forEach((tag) => tags.append(node('span', `#${tag}`))); card.append(tags); const details = document.createElement('details'); details.append(node('summary', 'Show editable scope')); details.append(node('p', project.details)); project.evidence.forEach((item) => details.append(link(item.label, item.href) || placeholder(item.label))); card.append(details); grid.append(card); }); }
+function renderCompetitions() { const body = $('#competition-table-body'); body.replaceChildren(); PORTFOLIO.competitions.forEach((item) => { const row = document.createElement('tr'); [item.competition, item.placement, item.category, item.year].forEach((value) => row.append(node('td', value))); const evidence = document.createElement('td'); evidence.append(link('public link', item.href) || placeholder(item.evidence)); row.append(evidence); body.append(row); }); const profiles = $('#community-profile-grid'); profiles.replaceChildren(); PORTFOLIO.communityProfiles.forEach((item) => { const card = node('article', '', 'card'); card.append(node('h3', item.label), link(item.value, item.href) || placeholder(item.value)); profiles.append(card); }); }
+function renderCerts() { const certs = $('#cert-grid'); certs.replaceChildren(); PORTFOLIO.certifications.forEach((item) => { const card = node('article', '', 'card'); card.append(node('h3', item.name), node('p', item.fullName), node('p', `${item.issuer} · ${item.year}`, 'muted'), link('public evidence', item.href) || placeholder(EDIT('PUBLIC EVIDENCE URL'))); certs.append(card); }); const experience = $('#experience-list'); experience.replaceChildren(); PORTFOLIO.experience.forEach((item) => { const row = node('li', '', 'timeline-item'); row.append(node('h3', `${item.period} — ${item.role}`), node('p', item.organization), node('p', item.description, 'muted'), link('public evidence', item.href) || placeholder(EDIT('OPTIONAL PUBLIC EVIDENCE'))); experience.append(row); }); }
+function renderContacts() { const contacts = $('#contact-links'); contacts.replaceChildren(); PORTFOLIO.contacts.forEach((item) => { const a = link(item.label, item.href, 'contact-link'); contacts.append(a || placeholder(item.label, 'contact-placeholder')); }); const pgp = $('#pgp-panel'); const key = PORTFOLIO.pgp.armoredKey; if (PORTFOLIO.pgp.enabled && key.includes('-----BEGIN PGP PUBLIC KEY BLOCK-----') && key.includes('-----END PGP PUBLIC KEY BLOCK-----')) { $('#pgp-key').textContent = key; pgp.classList.remove('hidden'); } else pgp.classList.add('hidden'); }
+function renderAll() { document.title = `${PORTFOLIO.identity.handle} — Portfolio Draft`; renderHero(); renderSkills(); renderProjects(); renderCompetitions(); renderCerts(); renderContacts(); }
+function print(text, type = 'response') { output.append(node('div', text, type)); output.scrollTop = output.scrollHeight; }
+function scroll(id) { const target = document.getElementById(id); if (!target) return false; target.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); return true; }
+const commands = { help: () => 'Commands: about, skills, projects, project <id>, ctf, certs, contact, labs, open <section>, status, clear, echo <text>, exit', about: () => scroll('about') && 'Opened about.', skills: () => scroll('skills') && 'Opened skills.', projects: () => PORTFOLIO.projects.map((p) => `${p.id} — ${p.title}`).join('\n'), project: (arg) => { const p = PORTFOLIO.projects.find((item) => item.id === arg); return p ? (scroll('projects'), `${p.title}: ${p.summary}`) : 'Unknown project ID.'; }, ctf: () => scroll('ctf') && 'Opened CTF.', certs: () => scroll('certs') && 'Opened certifications.', contact: () => scroll('contact') && 'Opened contact.', labs: () => { const target = url(PORTFOLIO.labs.href, ['https:']); if (!target) return 'Learning-labs URL not configured.'; window.open(target.href, '_blank', 'noopener'); return 'Opened learning labs.'; }, open: (arg) => scroll(arg) ? `Opened ${arg}.` : 'Known sections: about, skills, projects, ctf, certs, contact.', status: () => 'Draft state: replace all [EDIT: ...] fields before public publishing.', clear: () => { output.replaceChildren(); return null; }, echo: (arg) => arg, exit: () => { setTimeout(closeTerminal); return 'Closing terminal.'; } };
+function execute(raw) { const [command = '', ...args] = raw.trim().split(/\s+/); print(`visitor@portfolio:~$ ${raw}`, 'command'); const result = commands[command.toLowerCase()] ? commands[command.toLowerCase()](args.join(' ')) : `command not found: ${command}`; if (result !== null && result !== undefined) print(result); }
+function openTerminal(source) { opener = source || document.activeElement; dialog.showModal(); if (!output.childElementCount) print('Draft terminal ready. Type help for commands.'); input.focus(); } function closeTerminal() { dialog.close(); opener?.focus(); }
+$('#open-terminal').addEventListener('click', (event) => openTerminal(event.currentTarget)); $('#close-terminal').addEventListener('click', closeTerminal); dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeTerminal(); }); dialog.addEventListener('click', (event) => { if (event.target === dialog) closeTerminal(); }); $('#terminal-form').addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value) return; execute(value); history.push(value); historyIndex = history.length; input.value = ''; }); input.addEventListener('keydown', (event) => { if (event.key === 'ArrowUp') { event.preventDefault(); if (historyIndex > 0) input.value = history[--historyIndex]; } if (event.key === 'ArrowDown') { event.preventDefault(); if (historyIndex < history.length - 1) input.value = history[++historyIndex]; else input.value = ''; } if (event.key === 'Tab') { event.preventDefault(); const matches = Object.keys(commands).filter((name) => name.startsWith(input.value.trim())); if (matches.length === 1) input.value = `${matches[0]} `; } if (event.ctrlKey && event.key.toLowerCase() === 'l') { event.preventDefault(); output.replaceChildren(); } }); document.addEventListener('keydown', (event) => { if ((event.key === '~' || event.key === '`') && !['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName) && !dialog.open) { event.preventDefault(); openTerminal(document.activeElement); } });
+function navigation() { if (!('IntersectionObserver' in window)) return; const links = [...document.querySelectorAll('.nav-links a')]; const map = new Map(links.map((a) => [a.hash.slice(1), a])); new IntersectionObserver((entries) => { const active = entries.find((entry) => entry.isIntersecting); if (!active) return; links.forEach((a) => { a.classList.remove('active'); a.removeAttribute('aria-current'); }); const current = map.get(active.target.id); if (current) { current.classList.add('active'); current.setAttribute('aria-current', 'page'); } }, { threshold: .35 }).observe(document.querySelector('#about')); ['skills', 'projects', 'ctf', 'certs', 'contact'].forEach((id) => new IntersectionObserver((entries) => { const active = entries.find((entry) => entry.isIntersecting); if (!active) return; links.forEach((a) => { a.classList.remove('active'); a.removeAttribute('aria-current'); }); const current = map.get(id); current.classList.add('active'); current.setAttribute('aria-current', 'page'); }, { threshold: .35 }).observe(document.querySelector(`#${id}`))); }
+renderAll(); navigation();
