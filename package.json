@@ -17,6 +17,6 @@
     "deploy:labs": "vercel --prod apps/labs"
   },
   "devDependencies": {
-    "vercel": "37.0.0"
+    "vercel": "^47.2.2"
   }
 }

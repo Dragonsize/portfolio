@@ -1,0 +1,10 @@
+{
+  "description": "Showcase your cybersecurity skills and projects with a professional portfolio that enhances job prospects and demonstrates expertise to potential employers.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
