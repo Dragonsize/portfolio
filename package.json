@@ -5,7 +5,7 @@
   "description": "Public security portfolio and deterministic educational security labs",
   "type": "module",
   "engines": {
-    "node": ">=20.0.0"
+    "node": "20.x"
   },
   "scripts": {
     "dev": "npm run dev:portfolio",
@@ -15,8 +15,5 @@
     "check": "node --check apps/portfolio/app.js && node --check apps/labs/app.js && node --check apps/labs/shared/challenge-registry.js && node --check apps/labs/shared/progress-store.js && node --check apps/labs/api/_lib/lab-response.js && node --check apps/labs/api/_lib/lab-scenarios.js && node --check apps/labs/api/_lib/create-lab-handler.js && node --check apps/labs/api/lab-submit.js",
     "deploy:portfolio": "vercel --prod apps/portfolio",
     "deploy:labs": "vercel --prod apps/labs"
-  },
-  "devDependencies": {
-    "vercel": "^47.2.2"
   }
 }
