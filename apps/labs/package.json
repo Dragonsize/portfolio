@@ -1,0 +1,8 @@
+{
+  "name": "naven-security-learning-labs",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  }
+}
