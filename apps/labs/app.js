@@ -1,5 +1,6 @@
 import { CHALLENGES, challengeById } from './shared/challenge-registry.js';
 import { ProgressStore } from './shared/progress-store.js';
+import { initLabAmbient } from './ambient-pulse.js';
 
 const store = new ProgressStore(CHALLENGES.map(({ id }) => id));
 const grid = document.querySelector('#lab-grid');
@@ -11,9 +12,10 @@ const content = document.querySelector('#lab-content');
 const toast = document.querySelector('#toast');
 const themeToggle = document.querySelector('#theme-toggle');
 function initialTheme() { try { const saved = localStorage.getItem('labs-theme'); if (saved === 'dark' || saved === 'light') return saved; } catch {} return 'light'; }
-function applyTheme(theme, persist = false) { document.documentElement.dataset.theme = theme; themeToggle.textContent = `[ theme: ${theme} ]`; themeToggle.setAttribute('aria-pressed', String(theme === 'dark')); themeToggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`); if (persist) try { localStorage.setItem('labs-theme', theme); } catch {} }
+function applyTheme(theme, persist = false) { document.documentElement.dataset.theme = theme; themeToggle.textContent = `[ theme: ${theme} ]`; themeToggle.setAttribute('aria-pressed', String(theme === 'dark')); themeToggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`); if (persist) try { localStorage.setItem('labs-theme', theme); } catch {} document.dispatchEvent(new Event('labs-themechange')); }
 themeToggle.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
 applyTheme(initialTheme());
+initLabAmbient();
 let activeChallenge = null;
 let dialogOpener = null;
 

@@ -60,4 +60,10 @@ test('Labs shell exposes Portfolio navigation, favicon, and theme modes', async 
   assert.match(css, /:root\[data-theme=light\]\{color-scheme:light;/);
   assert.match(app, /localStorage\.getItem\('labs-theme'\)/);
   assert.match(app, /localStorage\.setItem\('labs-theme', theme\)/);
+  assert.match(html, /<div class="ambient-visual" aria-hidden="true"><canvas id="lab-signal-field"><\/canvas><\/div>/);
+  assert.match(css, /\.ambient-visual\{position:fixed;[^}]*pointer-events:none/);
+  assert.match(css, /main\{position:relative;z-index:1\}/);
+  assert.match(css, /#lab-signal-field\{display:none\}/);
+  assert.match(app, /initLabAmbient\(\)/);
+  assert.match(app, /new Event\('labs-themechange'\)/);
 });
