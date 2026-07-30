@@ -45,6 +45,24 @@ export function projectPoint(point, camera) {
   return { x: camera.width / 2 + camera.focal * point.x / point.z, y: camera.height / 2 - camera.focal * point.y / point.z, z: point.z };
 }
 
+export function unprojectPoint(point, depth, camera) {
+  return { x: (point.x - camera.width / 2) * depth / camera.focal, y: -(point.y - camera.height / 2) * depth / camera.focal, z: depth };
+}
+
+export function pointInProjectedTriangle(point, [a, b, c]) {
+  const area = (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+  if (Math.abs(area) < EPSILON) return false;
+  const signs = [[a, b], [b, c], [c, a]].map(([start, end]) => (end.x - start.x) * (point.y - start.y) - (end.y - start.y) * (point.x - start.x));
+  return signs.every((value) => value >= -EPSILON) || signs.every((value) => value <= EPSILON);
+}
+
+export function pointHitsProjectedTriangles(point, triangles, camera) {
+  return triangles.some((triangle) => {
+    const projected = triangle.map((vertex) => projectPoint(vertex, camera));
+    return projected.every(Boolean) && pointInProjectedTriangle(point, projected);
+  });
+}
+
 export function segmentIntersectionParameter(a, b, c, d) {
   const rX = b.x - a.x; const rY = b.y - a.y;
   const sX = d.x - c.x; const sY = d.y - c.y;

@@ -3,7 +3,7 @@ node_modules/
 .pnpm-store/
 .npm/
 .yarn/
-
+KNOWLEDGE_BASE.md
 # Build output and tooling caches
 dist/
 build/
