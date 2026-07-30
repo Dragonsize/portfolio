@@ -1,20 +1,22 @@
 <!doctype html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="color-scheme" content="dark">
+  <meta name="color-scheme" content="light dark">
   <meta name="description" content="Deterministic, simulation-only web security learning labs.">
   <title>Security Learning Labs</title>
+  <script>try{const theme=localStorage.getItem('labs-theme');if(theme==='dark'||theme==='light')document.documentElement.dataset.theme=theme}catch{}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="naven-mark-transparent.png" type="image/png">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <a class="skip-link" href="#labs">Skip to labs</a>
-  <header class="site-header"><nav class="nav" aria-label="Learning labs navigation"><a class="brand" href="/">security-labs_</a><a class="button quiet" href="https://example.com">&gt; PORTFOLIO ↗</a></nav></header>
+  <header class="site-header"><nav class="nav" aria-label="Learning labs navigation"><a class="brand" href="/">security-labs_</a><div class="header-actions"><div class="nav-links"><a href="https://naventran.vercel.app/">PORTFOLIO ↗</a><a href="/" aria-current="page">LABS</a></div><button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark theme">[ theme: light ]</button></div></nav></header>
   <main id="labs">
     <section class="hero section">
       <div class="hero-copy"><p class="prompt-line">visitor@labs:~$ ls ./simulations</p><h1>Security learning labs.<br><span>Safe by design.</span></h1><p class="muted">Eight deterministic exercises. No real targets, filesystem reads, outbound requests, account bypasses, or executable payloads.</p></div>

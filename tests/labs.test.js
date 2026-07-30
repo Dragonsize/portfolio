@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { CHALLENGES, challengeById } from '../apps/labs/shared/challenge-registry.js';
 import { knownChallenge, runScenario, verifyFlag } from '../apps/labs/api/_lib/lab-scenarios.js';
 
@@ -43,4 +44,20 @@ test('XSS simulator returns escaped fixture text, not executable HTML', () => {
 test('SSRF simulator confirms no outbound request occurred', () => {
   const result = runScenario('ssrf', 'lab://internal/catalog');
   assert.equal(result.artifact.outboundRequestMade, false);
+});
+
+test('Labs shell exposes Portfolio navigation, favicon, and theme modes', async () => {
+  const [html, css, app] = await Promise.all([
+    readFile(new URL('../apps/labs/index.html', import.meta.url), 'utf8'),
+    readFile(new URL('../apps/labs/styles.css', import.meta.url), 'utf8'),
+    readFile(new URL('../apps/labs/app.js', import.meta.url), 'utf8')
+  ]);
+  assert.match(html, /<html lang="en" data-theme="light">/);
+  assert.match(html, /href="naven-mark-transparent\.png" type="image\/png"/);
+  assert.match(html, /href="https:\/\/naventran\.vercel\.app\/"/);
+  assert.match(html, /<a href="\/" aria-current="page">LABS<\/a>/);
+  assert.match(html, /id="theme-toggle" class="theme-toggle" type="button"/);
+  assert.match(css, /:root\[data-theme=light\]\{color-scheme:light;/);
+  assert.match(app, /localStorage\.getItem\('labs-theme'\)/);
+  assert.match(app, /localStorage\.setItem\('labs-theme', theme\)/);
 });
