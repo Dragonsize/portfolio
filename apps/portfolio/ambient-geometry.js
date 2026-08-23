@@ -22,6 +22,41 @@ export const TETRAHEDRON = Object.freeze({ vertices: [[1, 1, 1], [-1, -1, 1], [-
 export const OCTAHEDRON = Object.freeze({ vertices: [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]], faces: [[0, 2, 4], [2, 1, 4], [1, 3, 4], [3, 0, 4], [2, 0, 5], [1, 2, 5], [3, 1, 5], [0, 3, 5]] });
 export const CUBE = Object.freeze({ vertices: CUBE_VERTICES, faces: CUBE_FACES });
 
+// Diamond — elongated octahedron (tall, gem-like)
+export const DIAMOND = Object.freeze({
+  vertices: [[0, 1.4, 0], [0, -1.4, 0], [1, 0, 0], [-1, 0, 0], [0, 0, 1], [0, 0, -1]],
+  faces: [[0, 4, 2], [0, 5, 4], [0, 3, 5], [0, 2, 3], [1, 2, 4], [1, 4, 5], [1, 5, 3], [1, 3, 2]]
+});
+
+// Icosahedron — 20-face polyhedron (near-spherical, distinctive silhouette)
+const PHI = (1 + Math.sqrt(5)) / 2;
+export const ICOSAHEDRON = Object.freeze({
+  vertices: [
+    [-1,  PHI, 0], [ 1,  PHI, 0], [-1, -PHI, 0], [ 1, -PHI, 0],
+    [0, -1,  PHI], [0,  1,  PHI], [0, -1, -PHI], [0,  1, -PHI],
+    [ PHI, 0, -1], [ PHI, 0,  1], [-PHI, 0, -1], [-PHI, 0,  1]
+  ],
+  faces: [
+    [0,11,5],[0,5,1],[0,1,7],[0,7,10],[0,10,11],
+    [1,5,9],[5,11,4],[11,10,2],[10,7,6],[7,1,8],
+    [3,9,4],[3,4,2],[3,2,6],[3,6,8],[3,8,9],
+    [4,9,5],[2,4,11],[6,2,10],[8,6,7],[9,8,1]
+  ]
+});
+
+// Hexagonal prism — 12 vertices, 10 faces (industrial look)
+const H = 0.7;
+const hexVerts = [0,1,2,3,4,5].map(i => { const a = Math.PI * 2 * i / 6; return [Math.cos(a), -H, Math.sin(a)]; });
+const hexTop   = [0,1,2,3,4,5].map(i => { const a = Math.PI * 2 * i / 6; return [Math.cos(a),  H, Math.sin(a)]; });
+export const HEX_PRISM = Object.freeze({
+  vertices: hexVerts.concat(hexTop),
+  faces: [
+    [0,1,2,3,4,5],             // bottom
+    [6,11,10,9,8,7],           // top (reversed winding)
+    [0,1,7,6],[1,2,8,7],[2,3,9,8],[3,4,10,9],[4,5,11,10],[5,0,6,11] // sides
+  ]
+});
+
 export function createSphereMesh(rings = 5, segments = 8) {
   const vertices = [[0, 1, 0]]; const faces = [];
   for (let ring = 1; ring < rings; ring += 1) { const phi = Math.PI * ring / rings; for (let segment = 0; segment < segments; segment += 1) { const theta = Math.PI * 2 * segment / segments; vertices.push([Math.sin(phi) * Math.cos(theta), Math.cos(phi), Math.sin(phi) * Math.sin(theta)]); } }
@@ -118,6 +153,14 @@ export function classifyProjectedLink(link, triangles, camera) {
     fragments.push({ u0, u1, occluded: nearest < point.z - EPSILON });
   }
   return fragments;
+}
+
+export const MESH_POOL = [CUBE, TETRAHEDRON, OCTAHEDRON, DIAMOND, ICOSAHEDRON, HEX_PRISM, createSphereMesh(4, 7)];
+
+export function randomMesh(excludeIndex = -1) {
+  let index;
+  do { index = Math.floor(Math.random() * MESH_POOL.length); } while (index === excludeIndex && MESH_POOL.length > 1);
+  return { mesh: MESH_POOL[index], index };
 }
 
 function lerp(a, b, amount) { return { x: a.x + (b.x - a.x) * amount, y: a.y + (b.y - a.y) * amount, z: a.z + (b.z - a.z) * amount }; }

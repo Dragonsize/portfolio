@@ -1,4 +1,4 @@
-import { buildMesh, CUBE, OCTAHEDRON, TETRAHEDRON, classifyProjectedLink, createSphereMesh, pointHitsProjectedTriangles, projectPoint, unprojectPoint } from './ambient-geometry.js';
+import { buildMesh, CUBE, OCTAHEDRON, TETRAHEDRON, DIAMOND, ICOSAHEDRON, HEX_PRISM, classifyProjectedLink, createSphereMesh, pointHitsProjectedTriangles, projectPoint, unprojectPoint, MESH_POOL, randomMesh } from './ambient-geometry.js';
 
 const PORTFOLIO = {
   identity: { handle: 'Dragonsize', name: 'Naven Tran', role: 'Cybersecurity-focused Computer Science student', availability: 'Contact through verified public channels below.', summary: 'Computer Science student focused on cybersecurity, building Python security tools and completing hands-on labs.', footerNotice: 'Security work shown for authorized, legal learning only.' },
@@ -20,40 +20,299 @@ themeToggle.addEventListener('click', () => applyTheme(document.documentElement.
 applyTheme(initialTheme());
 function node(tag, text = '', className = '') { const element = document.createElement(tag); element.textContent = text; element.className = className; return element; }
 function externalLink(label, href, className = '') { try { const parsed = new URL(href); if (!['https:', 'mailto:'].includes(parsed.protocol)) return null; const link = node('a', label, className); link.href = parsed.href; if (parsed.protocol === 'https:') { link.target = '_blank'; link.rel = 'noopener noreferrer'; } return link; } catch { return null; } }
-function renderPortfolio() { document.title = `${PORTFOLIO.identity.handle} — Portfolio`; const ticker = $('#ticker-track'); const signal = 'SECURITY RESEARCH · NETWORK AUDITING · CTF PRACTICE · PYTHON TOOLS · AUTHORIZED LEARNING · '; if (ticker) ticker.textContent = signal.repeat(2); const tickerSummary = $('#ticker-summary'); if (tickerSummary) tickerSummary.textContent = signal.trim(); $('#identity-name').textContent = PORTFOLIO.identity.name; $('#identity-role').textContent = PORTFOLIO.identity.role; $('#identity-summary').textContent = PORTFOLIO.identity.summary; $('#identity-availability').textContent = PORTFOLIO.identity.availability; $('#footer-notice').textContent = PORTFOLIO.identity.footerNotice; $('#hero-transcript').replaceChildren(...[['handle', PORTFOLIO.identity.handle], ['role', PORTFOLIO.identity.role], ['status', PORTFOLIO.identity.availability]].map(([label, value]) => node('p', `${label}: ${value}`))); const labs = $('#labs-link'); labs.href = PORTFOLIO.labs.href; labs.textContent = `> ${PORTFOLIO.labs.label}`; const tabs = $('#skill-tabs'); const panel = $('#skill-panel'); const selectSkill = (index) => { const skill = PORTFOLIO.skills[index]; panel.replaceChildren(node('h3', skill.title), node('p', skill.detail)); [...tabs.children].forEach((button, buttonIndex) => { button.setAttribute('aria-selected', String(buttonIndex === index)); button.tabIndex = buttonIndex === index ? 0 : -1; }); }; PORTFOLIO.skills.forEach((skill, index) => { const button = node('button', `[${index + 1}] ${skill.title}`, 'skill-tab'); button.type = 'button'; button.role = 'tab'; button.addEventListener('click', () => selectSkill(index)); button.addEventListener('keydown', (event) => { if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return; event.preventDefault(); const next = event.key === 'Home' ? 0 : event.key === 'End' ? PORTFOLIO.skills.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + PORTFOLIO.skills.length) % PORTFOLIO.skills.length; selectSkill(next); tabs.children[next].focus(); }); tabs.append(button); }); selectSkill(0); const projects = $('#project-grid'); PORTFOLIO.projects.forEach((project) => { const card = node('article', '', 'card'); const details = document.createElement('details'); details.append(node('summary', '> VIEW DETAILS'), node('p', project.description)); card.append(node('h3', project.title), node('p', project.summary), details); const tags = node('div', '', 'tags'); project.tags.forEach((tag) => tags.append(node('span', `#${tag}`))); card.append(tags); projects.append(card); }); const competitionBody = $('#competition-table-body'); PORTFOLIO.competitions.forEach((item) => { const row = document.createElement('tr'); [item.competition, item.placement, item.year].forEach((value) => row.append(node('td', value))); competitionBody.append(row); }); const certs = $('#cert-grid'); PORTFOLIO.certifications.forEach((cert) => { const card = node('article', '', 'card'); card.append(node('h3', cert.name), node('p', cert.fullName), node('p', `${cert.issuer} · ${cert.year}`, 'muted')); certs.append(card); }); const experience = $('#experience-list'); PORTFOLIO.experience.forEach((item) => { const row = node('li', '', 'timeline-item'); row.append(node('h3', `${item.period} — ${item.role}`), node('p', item.organization), node('p', item.description, 'muted')); experience.append(row); }); const contacts = $('#contact-links'); PORTFOLIO.contacts.forEach((item) => { const link = externalLink(item.label, item.href, 'contact-link'); if (link) contacts.append(link); }); }
+function renderPortfolio() {
+  document.title = `${PORTFOLIO.identity.handle} — Portfolio`;
+
+  // Ticker
+  const ticker = $('#ticker-track');
+  const signal = 'SECURITY RESEARCH · NETWORK AUDITING · CTF PRACTICE · PYTHON TOOLS · AUTHORIZED LEARNING · ';
+  if (ticker) ticker.textContent = signal.repeat(2);
+  const tickerSummary = $('#ticker-summary');
+  if (tickerSummary) tickerSummary.textContent = signal.trim();
+
+  // Identity
+  $('#identity-name').textContent = PORTFOLIO.identity.name;
+  $('#identity-role').textContent = PORTFOLIO.identity.role;
+  $('#identity-summary').textContent = PORTFOLIO.identity.summary;
+  $('#identity-availability').textContent = PORTFOLIO.identity.availability;
+  $('#footer-notice').textContent = PORTFOLIO.identity.footerNotice;
+
+  // Hero transcript
+  $('#hero-transcript').replaceChildren(
+    ...[['handle', PORTFOLIO.identity.handle], ['role', PORTFOLIO.identity.role], ['status', PORTFOLIO.identity.availability]]
+      .map(([label, value]) => node('p', `${label}: ${value}`))
+  );
+
+  // Labs link
+  const labs = $('#labs-link');
+  labs.href = PORTFOLIO.labs.href;
+  labs.textContent = `> ${PORTFOLIO.labs.label}`;
+
+  // Skills tabs + panel
+  const tabs = $('#skill-tabs');
+  const panel = $('#skill-panel');
+  const selectSkill = (index) => {
+    const skill = PORTFOLIO.skills[index];
+    const preserved = panel.querySelectorAll('.skill-meter');
+    panel.replaceChildren(node('h3', skill.title), node('p', skill.detail));
+    [...tabs.children].forEach((button, buttonIndex) => {
+      button.setAttribute('aria-selected', String(buttonIndex === index));
+      button.tabIndex = buttonIndex === index ? 0 : -1;
+    });
+    preserved.forEach(m => panel.append(m));
+  };
+  PORTFOLIO.skills.forEach((skill, index) => {
+    const button = node('button', `[${index + 1}] ${skill.title}`, 'skill-tab');
+    button.type = 'button';
+    button.role = 'tab';
+    button.addEventListener('click', () => selectSkill(index));
+    button.addEventListener('keydown', (event) => {
+      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
+      event.preventDefault();
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? PORTFOLIO.skills.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + PORTFOLIO.skills.length) % PORTFOLIO.skills.length;
+      selectSkill(next);
+      tabs.children[next].focus();
+    });
+    tabs.append(button);
+  });
+  selectSkill(0);
+
+  // Skill meters in panel
+  const skillMeterValues = [85, 70, 75];
+  PORTFOLIO.skills.forEach((skill, index) => {
+    const meter = node('div', '', 'skill-meter');
+    const fill = node('div', '', 'skill-meter-fill');
+    fill.setAttribute('data-fill', skillMeterValues[index]);
+    meter.append(fill);
+    panel.append(meter);
+  });
+
+  // Projects
+  const projects = $('#project-grid');
+  PORTFOLIO.projects.forEach((project) => {
+    const card = node('article', '', 'card');
+    const details = document.createElement('details');
+    details.append(node('summary', '> VIEW DETAILS'), node('p', project.description));
+    card.append(node('h3', project.title), node('p', project.summary), details);
+    const tags = node('div', '', 'tags');
+    project.tags.forEach((tag) => tags.append(node('span', `#${tag}`)));
+    card.append(tags);
+    projects.append(card);
+  });
+
+  // Competitions
+  const competitionBody = $('#competition-table-body');
+  PORTFOLIO.competitions.forEach((item) => {
+    const row = document.createElement('tr');
+    [item.competition, item.placement, item.year].forEach((value) => row.append(node('td', value)));
+    competitionBody.append(row);
+  });
+
+  // Certifications (with cert-badge for pulse animation)
+  const certs = $('#cert-grid');
+  PORTFOLIO.certifications.forEach((cert) => {
+    const card = node('article', '', 'card cert-badge');
+    card.append(node('h3', cert.name), node('p', cert.fullName), node('p', `${cert.issuer} · ${cert.year}`, 'muted'));
+    certs.append(card);
+  });
+
+  // Experience
+  const experience = $('#experience-list');
+  PORTFOLIO.experience.forEach((item) => {
+    const row = node('li', '', 'timeline-item');
+    row.append(node('h3', `${item.period} — ${item.role}`), node('p', item.organization), node('p', item.description, 'muted'));
+    experience.append(row);
+  });
+
+  // Contacts
+  const contacts = $('#contact-links');
+  PORTFOLIO.contacts.forEach((item) => {
+    const link = externalLink(item.label, item.href, 'contact-link');
+    if (link) contacts.append(link);
+  });
+}
 function initTerminal() { const drawer = $('#terminal-drawer'); const output = $('#terminal-output'); const input = $('#terminal-input'); const open = () => { drawer.classList.add('is-open'); drawer.inert = false; drawer.setAttribute('aria-hidden', 'false'); input.focus(); }; const close = () => { drawer.classList.remove('is-open'); drawer.inert = true; drawer.setAttribute('aria-hidden', 'true'); $('#open-terminal').focus(); }; $('#open-terminal').addEventListener('click', open); $('#close-terminal').addEventListener('click', close); $('#terminal-form').addEventListener('submit', (event) => { event.preventDefault(); const value = input.value.trim(); if (!value) return; output.append(Object.assign(document.createElement('p'), { textContent: `visitor@portfolio:~$ ${value}` }), Object.assign(document.createElement('p'), { textContent: value === 'help' ? 'Commands: help, about, projects, contact, clear' : value === 'clear' ? '' : 'command not found' })); if (value === 'clear') output.replaceChildren(); input.value = ''; }); }
 function initAmbientScene() {
   const canvas = $('#signal-field'); const context = canvas?.getContext('2d'); if (!context) return;
+
+  const sphereMesh = createSphereMesh(4, 7);
+  const meshPool = [CUBE, TETRAHEDRON, OCTAHEDRON, DIAMOND, ICOSAHEDRON, HEX_PRISM, sphereMesh];
+  const allMeshes = meshPool.slice();
+
+  const rand = (min, max) => min + Math.random() * (max - min);
+  const pickMesh = (exclude) => { let i; do { i = Math.floor(Math.random() * allMeshes.length); } while (allMeshes[i] === exclude && allMeshes.length > 1); return i; };
+
+  // factory: 5-7 shapes spread across canvas, each with random mesh type
+  const meshTypeRng = () => Math.floor(Math.random() * meshPool.length);
+  const initialCount = 5 + Math.floor(Math.random() * 3); // 5-7
+  const shapes = [...Array(initialCount)].map(() => {
+    const m = meshTypeRng();
+    return {
+      x: rand(-0.5, 0.5), y: rand(-0.4, 0.4),
+      vx: rand(1.5, 3.5) * (Math.random() < .5 ? 1 : -1), vy: rand(0.8, 2) * (Math.random() < .5 ? 1 : -1),
+      depth: rand(7, 12), size: rand(.4, 1.2),
+      meshType: m, rotX: rand(0, 6), rotY: rand(0, 6), rotZ: rand(0, 6),
+      angX: rand(.0002, .0006), angY: rand(.0002, .0006), angZ: rand(.0001, .0004)
+    };
+  });
+
   const nodes = [{ x: -3.7, y: 1.8, z: 11 }, { x: -1.8, y: .7, z: 9 }, { x: .5, y: 1.5, z: 12 }, { x: 3.2, y: .4, z: 9 }, { x: -3.1, y: -1.7, z: 11 }, { x: -.7, y: -1.2, z: 8 }, { x: 1.8, y: -1.8, z: 12 }, { x: 4, y: -1, z: 10 }];
   const links = [[0, 1], [1, 2], [2, 3], [0, 4], [1, 5], [4, 5], [5, 6], [6, 7], [3, 7], [2, 6]];
-  const sphere = createSphereMesh(4, 7); const seeds = [{ mesh: CUBE, position: { x: 1.8, y: .35, z: 5.7 }, size: 1.05, rotation: { x: .2, y: .6, z: -.2 }, speed: { x: .00016, y: -.00023, z: .00011 } }, { mesh: TETRAHEDRON, position: { x: -2.7, y: -1.25, z: 7.2 }, size: .82, rotation: { x: .7, y: -.4, z: .2 }, speed: { x: -.00012, y: .00016, z: -.00008 } }, { mesh: OCTAHEDRON, position: { x: 3.35, y: -1.8, z: 8.8 }, size: .68, rotation: { x: .1, y: .2, z: .4 }, speed: { x: .00009, y: .00012, z: -.00015 } }, { mesh: sphere, position: { x: -3.4, y: 1.9, z: 10.5 }, size: .86, rotation: { x: .3, y: .5, z: -.1 }, speed: { x: .00005, y: -.00009, z: .00004 } }, { mesh: CUBE, position: { x: .4, y: -2.1, z: 9.4 }, size: .52, rotation: { x: .5, y: -.2, z: .3 }, speed: { x: -.0001, y: .00008, z: .00012 } }];
-  const cube = seeds[0]; const cubeHome = { ...cube.position };
-  let width = 0; let height = 0; let ratio = 1; let frame = 0; let last = 0; let palette = {}; let activePointer = null; let dragOffset = null; let idleTimer = 0; let returnAnimation = null; let interactionEnabled = false; const camera = { width: 0, height: 0, focal: 0, near: .1 };
+
+  let width = 0, height = 0, ratio = 1, frame = 0, last = 0, palette = {};
+  const camera = { width: 0, height: 0, focal: 0, near: .1 };
+
   const canAnimate = () => !document.hidden && !reducedMotion.matches && desktopPointer.matches;
-  const canInteract = () => !reducedMotion.matches && desktopPointer.matches;
-  const refreshPalette = () => { const style = getComputedStyle(document.documentElement); palette = { line: style.getPropertyValue('--ambient-line').trim(), face: style.getPropertyValue('--ambient-face').trim(), edge: style.getPropertyValue('--ambient-edge').trim(), glow: style.getPropertyValue('--ambient-glow').trim() }; };
-  const point = (a, b, u) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
+  const refreshPalette = () => { const s = getComputedStyle(document.documentElement); palette = { line: s.getPropertyValue('--ambient-line').trim(), face: s.getPropertyValue('--ambient-face').trim(), edge: s.getPropertyValue('--ambient-edge').trim(), glow: s.getPropertyValue('--ambient-glow').trim() }; };
+
+  const pt = (a, b, u) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
   const drawLink = (a, b, alpha, dashed) => { context.setLineDash(dashed ? [4, 5] : []); context.globalAlpha = alpha; context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); context.stroke(); };
-  const meshBounds = (faces) => { const points = faces.flat(); return { left: Math.min(...points.map((p) => p.x)), right: Math.max(...points.map((p) => p.x)), top: Math.min(...points.map((p) => p.y)), bottom: Math.max(...points.map((p) => p.y)) }; };
-  const clip = (points) => { context.beginPath(); context.moveTo(points[0].x, points[0].y); points.slice(1).forEach((p) => context.lineTo(p.x, p.y)); context.closePath(); context.clip(); };
-  const drawScans = (faces, bounds, index, time) => { const middle = Math.round((bounds.top + bounds.bottom) / 2) + .5; faces.forEach((points) => { context.save(); clip(points); context.globalAlpha = .74; context.strokeStyle = palette.edge; context.setLineDash([]); context.beginPath(); context.moveTo(bounds.left - 2, middle); context.lineTo(bounds.right + 2, middle); context.stroke(); context.globalAlpha = .28; context.fillStyle = palette.line; context.fillRect(bounds.left - 2, middle - 4, bounds.right - bounds.left + 4, 1); context.fillRect(bounds.left - 2, middle + 4, bounds.right - bounds.left + 4, 1); context.restore(); }); if (reducedMotion.matches) return; const phase = (time + index * 1780) % (9300 + index * 1100); if (phase > 170) return; const alpha = .58 * (1 - phase / 170); [[-3, 2, 7], [0, 3, -6], [4, 1, 4]].forEach(([dy, h, dx]) => faces.forEach((points) => { context.save(); clip(points); context.beginPath(); context.rect(bounds.left, middle + dy, bounds.right - bounds.left, h); context.clip(); context.globalAlpha = alpha; context.fillStyle = palette.glow; context.fillRect(bounds.left + dx, middle + dy, bounds.right - bounds.left, h); context.restore(); })); };
-  const updateReturnAnimation = (time) => { if (!returnAnimation) return; const progress = Math.min(1, (time - returnAnimation.startedAt) / 450); const ease = 1 - (1 - progress) ** 3; cube.position.x = returnAnimation.from.x + (cubeHome.x - returnAnimation.from.x) * ease; cube.position.y = returnAnimation.from.y + (cubeHome.y - returnAnimation.from.y) * ease; if (progress === 1) { Object.assign(cube.position, cubeHome); returnAnimation = null; } };
-  const meshesAt = (time) => { updateReturnAnimation(time); return seeds.slice(0, width > 960 ? seeds.length : 3).map((seed) => buildMesh(seed.mesh, { position: seed.position, size: seed.size, rotation: { x: seed.rotation.x + time * seed.speed.x, y: seed.rotation.y + time * seed.speed.y, z: seed.rotation.z + time * seed.speed.z } })); };
-  const draw = (time = performance.now()) => { if (!width) return; const meshes = meshesAt(time); context.clearRect(0, 0, width, height); const triangles = meshes.flatMap((mesh) => mesh.triangles); const projected = nodes.map((node) => projectPoint(node, camera)); const classified = links.map(([a, b]) => ({ a, b, fragments: projected[a] && projected[b] ? classifyProjectedLink({ a: nodes[a], b: nodes[b], screenA: projected[a], screenB: projected[b] }, triangles, camera) : [] })); context.lineWidth = .8; context.strokeStyle = palette.line; classified.forEach(({ a, b, fragments }) => fragments.filter((part) => part.occluded).forEach((part) => drawLink(point(projected[a], projected[b], part.u0), point(projected[a], projected[b], part.u1), .35, true))); meshes.forEach((mesh, index) => { const faces = mesh.faces.map((face) => face.indices.map((vertex) => projectPoint(mesh.vertices[vertex], camera))).filter((face) => face.every(Boolean)); if (!faces.length) return; const bounds = meshBounds(faces); faces.forEach((face) => { context.globalAlpha = .48; context.fillStyle = palette.face; context.beginPath(); context.moveTo(face[0].x, face[0].y); face.slice(1).forEach((p) => context.lineTo(p.x, p.y)); context.closePath(); context.fill(); context.globalAlpha = .7; context.strokeStyle = palette.edge; context.setLineDash([]); context.stroke(); }); drawScans(faces, bounds, index, time); }); context.strokeStyle = palette.line; classified.forEach(({ a, b, fragments }) => fragments.filter((part) => !part.occluded).forEach((part) => drawLink(point(projected[a], projected[b], part.u0), point(projected[a], projected[b], part.u1), .62, false))); context.fillStyle = palette.edge; context.globalAlpha = .65; context.setLineDash([]); projected.forEach((p) => { if (!p) return; context.beginPath(); context.arc(p.x, p.y, 1.6, 0, Math.PI * 2); context.fill(); }); context.globalAlpha = 1; };
-  const resize = () => { width = innerWidth; height = innerHeight; ratio = Math.min(devicePixelRatio || 1, 1.25, Math.sqrt(2000000 / (width * height))); canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio); context.setTransform(ratio, 0, 0, ratio, 0, 0); Object.assign(camera, { width, height, focal: Math.min(width, height) * .92 }); draw(); };
+
+  const meshBounds = (faces) => { const pts = faces.flat(); return { left: Math.min(...pts.map(p => p.x)), right: Math.max(...pts.map(p => p.x)), top: Math.min(...pts.map(p => p.y)), bottom: Math.max(...pts.map(p => p.y)) }; };
+  const drawScans = (faces, bounds, index, time) => {
+    const mid = Math.round((bounds.top + bounds.bottom) / 2) + .5;
+    faces.forEach(points => {
+      context.save();
+      context.beginPath(); context.moveTo(points[0].x, points[0].y); points.slice(1).forEach(p => context.lineTo(p.x, p.y)); context.closePath(); context.clip();
+      context.globalAlpha = .74; context.strokeStyle = palette.edge; context.setLineDash([]); context.beginPath(); context.moveTo(bounds.left - 2, mid); context.lineTo(bounds.right + 2, mid); context.stroke(); context.globalAlpha = .28; context.fillStyle = palette.line; context.fillRect(bounds.left - 2, mid - 4, bounds.right - bounds.left + 4, 1); context.fillRect(bounds.left - 2, mid + 4, bounds.right - bounds.left + 4, 1);
+      context.restore();
+    });
+    if (reducedMotion.matches) return;
+    const phase = (time + index * 1780) % (9300 + index * 1100);
+    if (phase > 170) return;
+    const alpha = .58 * (1 - phase / 170);
+    [[-3, 2, 7], [0, 3, -6], [4, 1, 4]].forEach(([dy, h, dx]) => faces.forEach(points => {
+      context.save();
+      context.beginPath(); context.moveTo(points[0].x, points[0].y); points.slice(1).forEach(p => context.lineTo(p.x, p.y)); context.closePath(); context.clip(); context.beginPath(); context.rect(bounds.left, mid + dy, bounds.right - bounds.left, h); context.clip();
+      context.globalAlpha = alpha; context.fillStyle = palette.glow; context.fillRect(bounds.left + dx, mid + dy, bounds.right - bounds.left, h);
+      context.restore();
+    }));
+  };
+
+  // s.x, s.y in world coords [-4, 4]; z from depth + size
+  const posOf = (s) => ({ x: s.x, y: s.y, z: s.depth + s.size * 2 });
+  const meshOf = (s, time) => buildMesh(meshPool[s.meshType], { position: posOf(s), size: s.size, rotation: { x: s.rotX + time * s.angX, y: s.rotY + time * s.angY, z: s.rotZ + time * s.angZ } });
+  // bounce at world bounds — derived from canvas size for full viewport coverage
+  let X_BOUND = 8.5, Y_BOUND = 6.5;
+  const bounce = (s) => { if (s.x < -X_BOUND || s.x > X_BOUND) s.vx = -s.vx; if (s.y < -Y_BOUND || s.y > Y_BOUND) s.vy = -s.vy; s.x = Math.max(-X_BOUND, Math.min(X_BOUND, s.x)); s.y = Math.max(-Y_BOUND, Math.min(Y_BOUND, s.y)); };
+
+  const maybeSlash = (time) => {};
+
+  const waffleSlash = (s, time) => {
+    if (!s.slash) return null;
+    const t = (time - s.slash.startedAt) / 200;
+    if (t >= 1) { s.slash = null; return null; }
+    return { alpha: 1 - t, phase: t };
+  };
+
+  const maybeWaffle = (s, time) => {
+    if (s.slash) return;
+    const sinceLast = time - (s.lastSlash || 0);
+    const minWait = 4000 + Math.random() * 5000;
+    if (sinceLast > minWait && Math.random() < .02) {
+      s.slash = { startedAt: time, angle: Math.random() * Math.PI * 2, lines: Math.floor(3 + Math.random() * 4), triggered: false };
+      s.lastSlash = time;
+      s.justTriggered = true;
+    }
+  };
+
+  const triggerWaffle = (s) => {
+    if (!s.slash || s.slash.triggered) return;
+    s.slash.triggered = true;
+    s.meshType = pickMesh(allMeshes[s.meshType]);
+    s.vx = rand(2, 6) * (Math.random() < .5 ? 1 : -1);
+    s.vy = rand(1, 4) * (Math.random() < .5 ? 1 : -1);
+    s.angX = rand(.0002, .0006); s.angY = rand(.0002, .0006); s.angZ = rand(.0001, .0004);
+    s.size = rand(.4, 1.1);
+    s.depth = rand(6, 12);
+  };
+
+  const drawWaffle = (s, time, proj) => {
+    const wp = waffleSlash(s, time); if (!wp) return;
+    const angle = s.slash.angle;
+    const lines = s.slash.lines;
+    const len = Math.max(width, height) * .7;
+    const centerX = proj.x, centerY = proj.y;
+    const spacing = len / (lines - 1) || len;
+    context.save();
+    context.globalAlpha = wp.alpha * .8;
+    context.strokeStyle = palette.glow;
+    context.lineWidth = 3 * wp.alpha;
+    context.shadowColor = palette.glow;
+    context.shadowBlur = 12;
+    for (let i = 0; i < lines; i++) {
+      const offset = (i - (lines - 1) / 2) * spacing * .25;
+      const x0 = centerX + Math.cos(angle) * len - Math.sin(angle) * offset;
+      const y0 = centerY + Math.sin(angle) * len + Math.cos(angle) * offset;
+      const x1 = centerX - Math.cos(angle) * len - Math.sin(angle) * offset;
+      const y1 = centerY - Math.sin(angle) * len + Math.cos(angle) * offset;
+      context.beginPath(); context.moveTo(x0, y0); context.lineTo(x1, y1); context.stroke();
+    }
+    context.restore();
+  };
+
+  const draw = (time = performance.now()) => {
+    if (!width) return;
+    // move shapes in world coords — vx/vy are world-units per frame (~60fps)
+    shapes.forEach(s => { s.x += s.vx / 60; s.y += s.vy / 60; bounce(s); maybeWaffle(s, time); s._wp = waffleSlash(s, time); });
+    // separation: gently push apart when shapes overlap (tendency to spread out)
+    for (let i = 0; i < shapes.length; i++) for (let j = i + 1; j < shapes.length; j++) {
+      const a = shapes[i], b = shapes[j];
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const dist = Math.hypot(dx, dy) || .001;
+      if (dist < 2.2) { const push = (2.2 - dist) / 60; const ux = dx / dist, uy = dy / dist; a.vx += ux * push; a.vy += uy * push; b.vx -= ux * push; b.vy -= uy * push; }
+    }
+    context.clearRect(0, 0, width, height);
+    context.shadowBlur = 0; context.shadowColor = 'transparent'; context.lineWidth = .8;
+    const meshes = shapes.map(s => meshOf(s, time));
+    const triangles = meshes.flatMap(m => m.triangles);
+    const projected = nodes.map(n => projectPoint(n, camera));
+    const classified = links.map(([a, b]) => ({ a, b, fragments: projected[a] && projected[b] ? classifyProjectedLink({ a: nodes[a], b: nodes[b], screenA: projected[a], screenB: projected[b] }, triangles, camera) : [] }));
+    context.lineWidth = .8; context.strokeStyle = palette.line;
+    classified.forEach(({ a, b, fragments }) => fragments.filter(p => p.occluded).forEach(p => drawLink(pt(projected[a], projected[b], p.u0), pt(projected[a], projected[b], p.u1), .35, true)));
+    meshes.forEach((mesh, index) => {
+      const faces = mesh.faces.map(face => face.indices.map(v => projectPoint(mesh.vertices[v], camera))).filter(face => face.every(Boolean));
+      if (!faces.length) return;
+      const bounds = meshBounds(faces);
+      faces.forEach(face => { context.globalAlpha = .48; context.fillStyle = palette.face; context.beginPath(); context.moveTo(face[0].x, face[0].y); face.slice(1).forEach(p => context.lineTo(p.x, p.y)); context.closePath(); context.fill(); context.globalAlpha = .7; context.strokeStyle = palette.edge; context.setLineDash([]); context.stroke(); });
+      drawScans(faces, bounds, index, time);
+    });
+    context.strokeStyle = palette.line;
+    classified.forEach(({ a, b, fragments }) => fragments.filter(p => !p.occluded).forEach(p => drawLink(pt(projected[a], projected[b], p.u0), pt(projected[a], projected[b], p.u1), .62, false)));
+    context.fillStyle = palette.edge; context.globalAlpha = .65; context.setLineDash([]);
+    projected.forEach(p => { if (!p) return; context.beginPath(); context.arc(p.x, p.y, 1.6, 0, Math.PI * 2); context.fill(); });
+    context.globalAlpha = 1;
+    // draw per-shape waffle slashes and trigger on completion
+    shapes.forEach((s) => {
+      if (s._wp) {
+        const proj = projectPoint(posOf(s), camera);
+        if (proj) drawWaffle(s, time, proj);
+      }
+      if (s.justTriggered) { triggerWaffle(s); s.justTriggered = false; }
+    });
+  };
+
+  const resize = () => { width = innerWidth; height = innerHeight; ratio = Math.min(devicePixelRatio || 1, 1.25, Math.sqrt(2000000 / (width * height))); canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio); context.setTransform(ratio, 0, 0, ratio, 0, 0); Object.assign(camera, { width, height, focal: Math.min(width, height) * .92 });
+    // world bounds at screen edge, using representative depth 9 (mid of shape depth range)
+    const refDepth = 9;
+    X_BOUND = (width / 2) * refDepth / camera.focal;
+    Y_BOUND = (height / 2) * refDepth / camera.focal;
+    draw(); };
   const stop = () => { cancelAnimationFrame(frame); frame = 0; };
-  const loop = (time) => { frame = 0; if (!canAnimate()) return; if (time - last >= 33 || returnAnimation) { last = time; draw(time); } frame = requestAnimationFrame(loop); };
+  const loop = (time) => { frame = 0; if (!canAnimate()) return; if (time - last >= 33) { last = time; draw(time); } frame = requestAnimationFrame(loop); };
   const schedule = () => { if (!frame && canAnimate()) frame = requestAnimationFrame(loop); };
-  const canvasPoint = (event) => { const bounds = canvas.getBoundingClientRect(); return { x: (event.clientX - bounds.left) * width / bounds.width, y: (event.clientY - bounds.top) * height / bounds.height }; };
-  const currentCubeMesh = () => meshesAt(performance.now())[0];
-  const clearReturn = () => { if (returnAnimation) updateReturnAnimation(performance.now()); returnAnimation = null; if (idleTimer) { clearTimeout(idleTimer); idleTimer = 0; } };
-  const queueReturn = () => { if (!interactionEnabled) return; if (idleTimer) clearTimeout(idleTimer); idleTimer = setTimeout(() => { idleTimer = 0; returnAnimation = { startedAt: performance.now(), from: { ...cube.position } }; schedule(); }, 5000); };
-  const finishDrag = (event) => { if (activePointer === null || (event && event.pointerId !== activePointer)) return; const pointerId = activePointer; activePointer = null; dragOffset = null; document.body.classList.remove('is-cube-dragging'); if (canvas.hasPointerCapture(pointerId)) canvas.releasePointerCapture(pointerId); queueReturn(); };
-  const onPointerDown = (event) => { if (event.target !== canvas || event.button !== 0 || activePointer !== null) return; const pointAtPointer = canvasPoint(event); const cubeMesh = currentCubeMesh(); if (!cubeMesh || !pointHitsProjectedTriangles(pointAtPointer, cubeMesh.triangles, camera)) return; event.preventDefault(); clearReturn(); const worldPoint = unprojectPoint(pointAtPointer, cube.position.z, camera); dragOffset = { x: cube.position.x - worldPoint.x, y: cube.position.y - worldPoint.y }; activePointer = event.pointerId; canvas.setPointerCapture(activePointer); document.body.classList.remove('is-cube-hovered'); document.body.classList.add('is-cube-dragging'); };
-  const onPointerMove = (event) => { if (activePointer === event.pointerId) { const worldPoint = unprojectPoint(canvasPoint(event), cube.position.z, camera); cube.position.x = worldPoint.x + dragOffset.x; cube.position.y = worldPoint.y + dragOffset.y; draw(performance.now()); return; } if (activePointer !== null) return; const cubeMesh = currentCubeMesh(); document.body.classList.toggle('is-cube-hovered', event.target === canvas && Boolean(cubeMesh && pointHitsProjectedTriangles(canvasPoint(event), cubeMesh.triangles, camera))); };
-  const enableInteraction = () => { if (interactionEnabled || !canInteract()) return; interactionEnabled = true; canvas.classList.add('is-interactive'); window.addEventListener('pointerdown', onPointerDown); window.addEventListener('pointermove', onPointerMove); window.addEventListener('pointerup', finishDrag); window.addEventListener('pointercancel', finishDrag); canvas.addEventListener('lostpointercapture', finishDrag); };
-  const disableInteraction = () => { if (!interactionEnabled) return; finishDrag(); interactionEnabled = false; clearReturn(); Object.assign(cube.position, cubeHome); canvas.classList.remove('is-interactive'); document.body.classList.remove('is-cube-hovered', 'is-cube-dragging'); window.removeEventListener('pointerdown', onPointerDown); window.removeEventListener('pointermove', onPointerMove); window.removeEventListener('pointerup', finishDrag); window.removeEventListener('pointercancel', finishDrag); canvas.removeEventListener('lostpointercapture', finishDrag); };
-  const syncInteraction = () => canInteract() ? enableInteraction() : disableInteraction();
-  addEventListener('resize', resize); document.addEventListener('visibilitychange', () => { if (document.hidden) { finishDrag(); stop(); } else schedule(); }); document.addEventListener('portfolio-themechange', () => { refreshPalette(); draw(); }); reducedMotion.addEventListener('change', () => { syncInteraction(); reducedMotion.matches ? (stop(), draw()) : schedule(); }); desktopPointer.addEventListener('change', () => { syncInteraction(); desktopPointer.matches ? (resize(), schedule()) : (stop(), context.clearRect(0, 0, width, height)); }); refreshPalette(); resize(); syncInteraction(); schedule();
+
+  addEventListener('resize', resize);
+  document.addEventListener('visibilitychange', () => document.hidden ? stop() : schedule());
+  document.addEventListener('portfolio-themechange', () => { refreshPalette(); draw(); });
+  reducedMotion.addEventListener('change', () => reducedMotion.matches ? (stop(), draw()) : schedule());
+  desktopPointer.addEventListener('change', () => desktopPointer.matches ? (resize(), schedule()) : (stop(), context.clearRect(0, 0, width, height)));
+  refreshPalette(); resize(); schedule();
 }
-renderPortfolio(); initTerminal(); initAmbientScene();
+function initScrollReveal() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => { if (entry.isIntersecting) { entry.target.classList.add('revealed'); observer.unobserve(entry.target); } });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.panel[data-reveal]').forEach((panel) => observer.observe(panel));
+}
+renderPortfolio(); initTerminal(); initAmbientScene(); initScrollReveal();
