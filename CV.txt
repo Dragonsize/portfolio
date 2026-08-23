@@ -1,0 +1,235 @@
+%-----------------------------------------------------------------------------------------------------------------------------------------------%
+%    The MIT License (MIT)
+%
+%    Copyright (c) 2021 Jitin Nair
+%
+%    Permission is hereby granted, free of charge, to any person obtaining a copy
+%    of this software and associated documentation files (the "Software"), to deal
+%    in the Software without restriction, including without limitation the rights
+%    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+%    copies of the Software, and to permit persons to whom the Software is
+%    furnished to do so, subject to the following conditions:
+%
+%    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+%    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+%    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+%    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+%    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+%    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+%    THE SOFTWARE.
+%
+%
+%-----------------------------------------------------------------------------------------------------------------------------------------------%
+
+%----------------------------------------------------------------------------------------
+%    DOCUMENT DEFINITION
+%----------------------------------------------------------------------------------------
+
+% article class because we want to fully customize the page and not use a cv template
+\documentclass[a4paper,11pt]{article}
+
+%----------------------------------------------------------------------------------------
+
+%   FONT
+%----------------------------------------------------------------------------------------
+
+\usepackage{fontspec} % make sure compiler is XeLaTeX or LuaLaTeX
+\defaultfontfeatures{Ligatures=TeX}
+
+% Use Times New Roman as the main font
+\setmainfont{Times New Roman}
+
+%----------------------------------------------------------------------------------------
+%    PACKAGES
+%----------------------------------------------------------------------------------------
+\usepackage{url}
+\usepackage{parskip}
+
+%other packages for formatting
+\RequirePackage{color}
+\RequirePackage{graphicx}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[scale=0.9]{geometry}
+
+%tabularx environment
+\usepackage{tabularx}
+
+%for lists within experience section
+\usepackage{enumitem}
+
+% centered version of 'X' col. type
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+
+%to prevent spillover of tabular into next pages
+\usepackage{supertabular}
+\usepackage{tabularx}
+\newlength{\fullcollw}
+\setlength{\fullcollw}{0.47\textwidth}
+
+%custom \section
+\usepackage{titlesec}
+\usepackage{multicol}
+\usepackage{multirow}
+
+%CV Sections inspired by:
+%http://stefano.italians.nl/archives/26
+\titleformat{\section}{\large\scshape\raggedright}{}{0em}{}[\titlerule]
+\titlespacing{\section}{0pt}{5pt}{4pt}
+
+%for publications
+\usepackage[style=authoryear,sorting=ynt, maxbibnames=2]{biblatex}
+
+%Setup hyperref package, and colours for links
+\usepackage[unicode, draft=false]{hyperref}
+\definecolor{linkcolour}{rgb}{0,0.2,0.6}
+\hypersetup{colorlinks,breaklinks,urlcolor=linkcolour,linkcolor=linkcolour}
+\addbibresource{citations.bib}
+\setlength\bibitemsep{1em}
+
+%for social icons
+\usepackage{fontawesome5}
+
+%debug page outer frames
+%\usepackage{showframe}
+
+
+% job listing environments
+\newenvironment{jobshort}[2]
+    {
+    \begin{tabularx}{\linewidth}{@{}l X r@{}}
+    \textbf{#1} & \hfill &  #2 \\[3.75pt]
+    \end{tabularx}
+    }
+    {
+    }
+
+\newenvironment{joblong}[2]
+    {
+    \begin{tabularx}{\linewidth}{@{}l X r@{}}
+    \textbf{#1} & \hfill &  #2 \\[3.75pt]
+    \end{tabularx}
+    \begin{minipage}[t]{\linewidth}
+    \begin{itemize}[nosep,after=\strut, leftmargin=1em, itemsep=3pt,label=--]
+    }
+    {
+    \end{itemize}
+    \end{minipage}
+    }
+
+\setlength{\parskip}{2pt}
+\setlength{\parindent}{0pt}
+
+%----------------------------------------------------------------------------------------
+%    BEGIN DOCUMENT
+%----------------------------------------------------------------------------------------
+\begin{document}
+
+% non-numbered pages
+\pagestyle{empty}
+
+%----------------------------------------------------------------------------------------
+%    TITLE
+%----------------------------------------------------------------------------------------
+
+\begin{tabularx}{\linewidth}{@{} C @{}}
+\Large{Tran Thanh Phat (Naven)}\\[4pt]
+\href{https://github.com/Dragonsize}{\raisebox{-0.05\height}\faGithub\ Github} \ $|$ \
+\href{https://www.linkedin.com/in/navensol/}{\raisebox{-0.05\height}\faGithub\ LinkedIn} \ $|$ \
+\href{mailto:tranphate@gmail.com}{\raisebox{-0.05\height}\faEnvelope \ tranphate@gmail.com} \ $|$ \
+\href{tel:0842609007}{\raisebox{-0.05\height}\faMobile \ 0842609007}\\
+\end{tabularx}
+
+%----------------------------------------------------------------------------------------
+% EXPERIENCE SECTIONS
+%----------------------------------------------------------------------------------------
+
+\section{Summary}
+Computer Science student focused on cybersecurity, building Python security tools and completing hands-on labs. Passionate about web security testing, network analysis, and authorized security research.
+
+\section{Projects}
+\begin{tabularx}{\linewidth}{ @{}l r@{} }
+\textbf{Real-Time Messaging Platform} & \hfill
+\href{https://github.com/Dragonsize}{\raisebox{-0.05\height}\faGithub} \\
+\end{tabularx}
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}[nosep,after=\strut, leftmargin=1em, itemsep=1.5pt,label=--]
+    \item Built with Node.js, Express, WebSockets, and Supabase PostgreSQL
+    \item Real-time messaging with live communication and persistent storage
+\end{itemize}
+\end{minipage}
+\vspace{3pt}
+
+\begin{tabularx}{\linewidth}{ @{}l r@{} }
+\textbf{CTF Image Forensics Toolkit} & \hfill
+\href{https://github.com/Dragonsize}{\raisebox{-0.05\height}\faGithub} \\
+\end{tabularx}
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}[nosep,after=\strut, leftmargin=1em, itemsep=1.5pt,label=--]
+    \item Bash-based structured image triage and reporting toolkit
+    \item Repeatable triage steps for authorized CTF challenge analysis
+\end{itemize}
+\end{minipage}
+\vspace{3pt}
+
+\begin{tabularx}{\linewidth}{ @{}l r@{} }
+\textbf{Network Audit Scanner} & \hfill
+\href{https://github.com/Dragonsize}{\raisebox{-0.05\height}\faGithub} \\
+\end{tabularx}
+\begin{minipage}[t]{\linewidth}
+\begin{itemize}[nosep,after=\strut, leftmargin=1em, itemsep=1.5pt,label=--]
+    \item Concurrent Python TCP scanner and baseline audit checker
+    \item TCP service discovery against baseline audit expectations
+\end{itemize}
+\end{minipage}
+\vspace{3pt}
+
+%----------------------------------------------------------------------------------------
+%    EDUCATION
+%----------------------------------------------------------------------------------------
+\section{Education}
+\begin{tabularx}{\linewidth}{@{}l X r@{}}
+\textbf{Ton Duc Thang University} & \hfill & 2025 -- Present \\
+Computer Science (Sophomore student) & & \\
+\quad Awards: Municipal English Excellent Student Contest 2025 (Third Prize) & & \\
+\quad IELTS 7.5 (2025) & & \\
+\quad OPSWAT Critical Infrastructure Protection (2026) & & \\
+\end{tabularx}
+
+%----------------------------------------------------------------------------------------
+%    COMPETITIONS
+%----------------------------------------------------------------------------------------
+\section{Competitions}
+\begin{tabularx}{\linewidth}{@{}l X r@{}}
+\textbf{Municipal Academic Excellence Award} & Third Prize & 2025 \\
+\textbf{IT-Zone's Software Contest} & First Prize & 2026 \\
+\textbf{IT-Zone's Software Contest} & Best Individual & 2026 \\
+\textbf{Trae Solo} & 2nd Place & 2026 \\
+\end{tabularx}
+
+%----------------------------------------------------------------------------------------
+%    CERTIFICATIONS
+%----------------------------------------------------------------------------------------
+\section{Certifications}
+\begin{tabularx}{\linewidth}{@{}l X r@{}}
+\textbf{IELTS} & Band 7.5 & 2025 \\
+\textbf{OPSWAT} & Introduction to Critical Infrastructure Protection & 2026 \\
+\end{tabularx}
+
+%----------------------------------------------------------------------------------------
+%    SKILLS
+%----------------------------------------------------------------------------------------
+\section{Skills}
+\begin{tabularx}{\linewidth}{@{}l X@{}}
+\textbf{Web Security} & SQLi, XSS, auth testing in legal lab and CTF environments \\
+\textbf{Network Auditing} & Python tooling for TCP discovery and baseline audit checks \\
+\textbf{Dev \& Systems} & Python, JavaScript, HTML/CSS, C, C++, Linux, Git, Postman \\
+\textbf{Soft Skills} & Self-learning, teamwork, communication, time management \\
+\end{tabularx}
+
+%----------------------------------------------------------------------------------------
+%    LEARNING LABS
+%----------------------------------------------------------------------------------------
+\section{Learning Labs}
+\href{https://labs-naventran.vercel.app/}{\faGlobe\ labs-naventran.vercel.app} -- Educational security labs (8 deterministic simulations, API functions)
+
+\end{document}

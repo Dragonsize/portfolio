@@ -1,0 +1,50 @@
+/* ============ Cybersec Animations ============
+   Panel reveals, cert pulse, skill meters.
+   All colors from --* CSS vars (styles.css).
+   ===================================================================== */
+
+/* ---- Reduced motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    transition-duration: 0s !important;
+  }
+}
+
+/* ---- Skill meter: progress bar with fill animation ---- */
+.skill-meter { position: relative; width: 100%; height: .4rem; background: var(--border); border-radius: .2rem; overflow: hidden; margin-top: .5rem; }
+.skill-meter-fill { height: 100%; background: var(--accent); width: 0%; transition: width .8s ease forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .skill-meter-fill { transition: width 0s; }
+}
+.skill-meter-fill[data-fill="40"] { width: 40%; }
+.skill-meter-fill[data-fill="50"] { width: 50%; }
+.skill-meter-fill[data-fill="60"] { width: 60%; }
+.skill-meter-fill[data-fill="67"] { width: 67%; }
+.skill-meter-fill[data-fill="70"] { width: 70%; }
+.skill-meter-fill[data-fill="75"] { width: 75%; }
+.skill-meter-fill[data-fill="80"] { width: 80%; }
+.skill-meter-fill[data-fill="85"] { width: 85%; }
+.skill-meter-fill[data-fill="90"] { width: 90%; }
+.skill-meter-fill[data-fill="95"] { width: 95%; }
+.skill-meter-fill[data-fill="100"] { width: 100%; }
+
+/* ---- Cert badge: pulse glow on focus/hover ---- */
+.cert-badge { position: relative; display: inline-block; }
+.cert-badge::after {
+  content: ''; position: absolute; inset: -.25rem;
+  border-radius: .5rem; border: 2px solid var(--accent);
+  opacity: 0; transition: opacity .3s; z-index: -1;
+}
+.cert-badge:hover::after, .cert-badge:focus-visible::after { opacity: .35; }
+
+/* ---- Panel: reveal on scroll ---- */
+.panel[data-reveal] { opacity: 0; transform: translateY(2rem); transition: opacity .6s ease, transform .6s ease; }
+.panel[data-reveal].revealed { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .panel[data-reveal] { transition: none; }
+}
+
+/* ---- Nav: active link ---- */
+.nav-links a.active { border-color: var(--accent); color: var(--accent); background: var(--hover); }
+

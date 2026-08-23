@@ -5,7 +5,7 @@ const PORTFOLIO = {
   labs: { href: 'https://labs-naventran.vercel.app/', label: 'OPEN LEARNING LABS' },
   skills: [{ title: 'Web security testing', detail: 'SQLi, XSS, and authentication testing in legal lab and CTF environments.' }, { title: 'Network analysis & auditing', detail: 'Python tooling for TCP service discovery and baseline audit checks.' }, { title: 'Development & systems', detail: 'Python, JavaScript, HTML/CSS, C, C++, Linux, Git, and Postman.' }],
   projects: [{ title: 'Real-Time Messaging Platform', summary: 'Node.js, Express, WebSockets, and Supabase PostgreSQL.', description: 'Real-time messaging application built around Node.js and Express, using WebSockets for live communication and Supabase PostgreSQL for persistence.', tags: ['Node.js', 'Express', 'WebSockets', 'Supabase'] }, { title: 'CTF Image Forensics Toolkit', summary: 'Bash-based structured image triage and reporting toolkit.', description: 'Bash toolkit for CTF image-forensics workflows. It organizes repeatable triage steps and produces structured findings for authorized challenge analysis.', tags: ['Bash', 'CTF', 'Image forensics'] }, { title: 'Network Audit Scanner', summary: 'Concurrent Python TCP scanner and baseline audit checker.', description: 'Python tool for authorized network assessment. It performs concurrent TCP service discovery and checks results against baseline audit expectations.', tags: ['Python', 'Network auditing', 'TCP'] }],
-  competitions: [{ competition: 'Municipal Academic Excellence Award', placement: 'Third Prize', year: '2025' }, { competition: 'IT-Zone’s Software Contest', placement: 'First Prize', year: '2026' }, { competition: 'IT-Zone’s Software Contest', placement: 'Best Individual', year: '2026' }],
+  competitions: [{ competition: 'Municipal Academic Excellence Award', placement: 'Third Prize', year: '2025' }, { competition: 'IT-Zone\'s Software Contest', placement: 'First Prize', year: '2026' }, { competition: 'IT-Zone\'s Software Contest', placement: 'Best Individual', year: '2026' }],
   certifications: [{ name: 'IELTS 7.5', fullName: 'IELTS Certificate — Band 7.5', issuer: 'IELTS', year: '2025' }, { name: 'OPSWAT', fullName: 'Introduction to Critical Infrastructure Protection', issuer: 'OPSWAT', year: '2026' }],
   experience: [{ period: '2025–Present', role: 'Computer Science student', organization: 'Ton Duc Thang University', description: 'Major in Computer Science.' }],
   contacts: [{ label: 'GitHub: Dragonsize', href: 'https://github.com/Dragonsize' }, { label: 'Email: tranphate@gmail.com', href: 'mailto:tranphate@gmail.com' }]
@@ -162,8 +162,16 @@ function initAmbientScene() {
   let width = 0, height = 0, ratio = 1, frame = 0, last = 0, palette = {};
   const camera = { width: 0, height: 0, focal: 0, near: .1 };
 
+  let cursorX = 0, cursorY = 0;
+  let cursorScreenX = 0, cursorScreenY = 0;
+  let nearShape = null;
   const canAnimate = () => !document.hidden && !reducedMotion.matches && desktopPointer.matches;
   const refreshPalette = () => { const s = getComputedStyle(document.documentElement); palette = { line: s.getPropertyValue('--ambient-line').trim(), face: s.getPropertyValue('--ambient-face').trim(), edge: s.getPropertyValue('--ambient-edge').trim(), glow: s.getPropertyValue('--ambient-glow').trim() }; };
+
+  const repelFromCursor = (s) => {
+    const dx = cursorX - s.x; const dy = cursorY - s.y; const distSq = dx * dx + dy * dy;
+    if (distSq < 100 && distSq > .01) { const dist = Math.sqrt(distSq); const strength = (10 - dist) / 10; s.vx -= (dx / dist) * strength * 0.12; s.vy -= (dy / dist) * strength * 0.12; }
+  };
 
   const pt = (a, b, u) => ({ x: a.x + (b.x - a.x) * u, y: a.y + (b.y - a.y) * u });
   const drawLink = (a, b, alpha, dashed) => { context.setLineDash(dashed ? [4, 5] : []); context.globalAlpha = alpha; context.beginPath(); context.moveTo(a.x, a.y); context.lineTo(b.x, b.y); context.stroke(); };
@@ -189,34 +197,36 @@ function initAmbientScene() {
     }));
   };
 
-  // s.x, s.y in world coords [-4, 4]; z from depth + size
   const posOf = (s) => ({ x: s.x, y: s.y, z: s.depth + s.size * 2 });
   const meshOf = (s, time) => buildMesh(meshPool[s.meshType], { position: posOf(s), size: s.size, rotation: { x: s.rotX + time * s.angX, y: s.rotY + time * s.angY, z: s.rotZ + time * s.angZ } });
+
   // bounce at world bounds — derived from canvas size for full viewport coverage
   let X_BOUND = 8.5, Y_BOUND = 6.5;
   const bounce = (s) => { if (s.x < -X_BOUND || s.x > X_BOUND) s.vx = -s.vx; if (s.y < -Y_BOUND || s.y > Y_BOUND) s.vy = -s.vy; s.x = Math.max(-X_BOUND, Math.min(X_BOUND, s.x)); s.y = Math.max(-Y_BOUND, Math.min(Y_BOUND, s.y)); };
 
-  const maybeSlash = (time) => {};
+  // 3-phase vortex slash: slash(0-250ms) → break(250-500ms) → fuse(500-750ms)
+  const THIRD = 1 / 3;
+  const VORTEX_MS = 750;
 
   const waffleSlash = (s, time) => {
     if (!s.slash) return null;
-    const t = (time - s.slash.startedAt) / 400; // 400ms vortex cycle
+    const t = (time - s.slash.startedAt) / VORTEX_MS;
     if (t >= 1) { s.slash = null; return null; }
-    // phase: 0-0.5 opening + destroy, 0.5-1 closing + reveal
-    const phase = t < 0.5 ? 'open' : 'close';
-    const half = t < 0.5 ? t * 2 : (t - 0.5) * 2; // 0-1 within half
-    return { alpha: 1 - t * 0.6, phase, half, t };
+    const phase = t < THIRD ? 'slash' : t < THIRD * 2 ? 'break' : 'fuse';
+    return { phase, t };
+  };
+
+  const startWaffle = (s, time) => {
+    s.slash = { startedAt: time, angle: Math.random() * Math.PI * 2, lines: Math.floor(3 + Math.random() * 4), triggered: false };
+    s.lastSlash = time;
+    s.justTriggered = true;
   };
 
   const maybeWaffle = (s, time) => {
     if (s.slash) return;
     const sinceLast = time - (s.lastSlash || 0);
     const minWait = 4000 + Math.random() * 5000;
-    if (sinceLast > minWait && Math.random() < .02) {
-      s.slash = { startedAt: time, angle: Math.random() * Math.PI * 2, lines: Math.floor(3 + Math.random() * 4), triggered: false };
-      s.lastSlash = time;
-      s.justTriggered = true;
-    }
+    if (sinceLast > minWait && Math.random() < .02) startWaffle(s, time);
   };
 
   const triggerWaffle = (s) => {
@@ -233,49 +243,72 @@ function initAmbientScene() {
   const drawVortex = (s, time, proj) => {
     const wp = s._wp;
     if (!wp) return;
-    const { phase, half, alpha, t } = wp;
     const cx = proj.x, cy = proj.y;
-    const isMidpoint = phase === 'close' && half < 0.05; // just crossed midpoint
-    // vortex ring radius: grows on open, shrinks on close
-    const maxR = Math.min(width, height) * 0.18;
-    const r = phase === 'open' ? half * maxR : (1 - half) * maxR;
-    const arms = 6, ringCount = 3;
     context.save();
-    // spinning rings
-    for (let ring = 0; ring < ringCount; ring++) {
-      const ringR = r * (0.4 + ring * 0.3);
-      const armAlpha = alpha * 0.55 * (1 - ring / ringCount);
-      context.globalAlpha = armAlpha;
+    context.shadowColor = palette.glow;
+    context.shadowBlur = 12;
+    if (wp.phase === 'slash') {
+      // slash lines across shape
+      const angle = s.slash.angle;
+      const lines = s.slash.lines;
+      const len = Math.max(width, height) * 0.4;
+      const spacing = len / (lines - 1) || len;
+      context.globalAlpha = 0.9;
       context.strokeStyle = palette.glow;
-      context.lineWidth = 2.5 - ring * 0.5;
-      context.shadowColor = palette.glow;
-      context.shadowBlur = 10;
-      for (let a = 0; a < arms; a++) {
-        const angle = (a / arms) * Math.PI * 2 + t * 12 + ring * 0.5; // spin
-        const sweep = Math.PI * 0.55;
-        context.beginPath();
-        context.arc(cx, cy, ringR, angle, angle + sweep);
-        context.stroke();
+      context.lineWidth = 3;
+      for (let i = 0; i < lines; i++) {
+        const offset = (i - (lines - 1) / 2) * spacing * 0.3;
+        const x0 = cx + Math.cos(angle) * len - Math.sin(angle) * offset;
+        const y0 = cy + Math.sin(angle) * len + Math.cos(angle) * offset;
+        const x1 = cx - Math.cos(angle) * len - Math.sin(angle) * offset;
+        const y1 = cy - Math.sin(angle) * len + Math.cos(angle) * offset;
+        context.beginPath(); context.moveTo(x0, y0); context.lineTo(x1, y1); context.stroke();
       }
-    }
-    // center flash at midpoint
-    if (isMidpoint) {
-      context.globalAlpha = 0.85;
-      context.shadowColor = '#fff';
-      context.shadowBlur = 25;
-      context.fillStyle = '#fff';
-      context.beginPath();
-      context.arc(cx, cy, maxR * 0.35, 0, Math.PI * 2);
-      context.fill();
+    } else if (wp.phase === 'break') {
+      // vortex spirals INWARD, shape shatters
+      const prog = (wp.t - THIRD) / THIRD;
+      const rings = 5;
+      for (let r = 0; r < rings; r++) {
+        const ringR = Math.max(width, height) * 0.3 * (1 - prog * 0.85) * (0.4 + r * 0.15);
+        const alpha = 0.7 * (1 - prog) * (1 - r / rings);
+        context.globalAlpha = alpha;
+        context.strokeStyle = palette.glow;
+        context.lineWidth = 2.5 - r * 0.3;
+        const arms = 7;
+        for (let a = 0; a < arms; a++) {
+          const ang = (a / arms) * Math.PI * 2 + time * 18;
+          const sweep = Math.PI * 0.7;
+          context.beginPath();
+          context.arc(cx, cy, ringR, ang, ang + sweep);
+          context.stroke();
+        }
+      }
+    } else if (wp.phase === 'fuse') {
+      // debris particles swirl IN and fuse into new shape
+      const prog = (wp.t - THIRD * 2) / THIRD;
+      const particles = 24;
+      for (let i = 0; i < particles; i++) {
+        const ang = (i / particles) * Math.PI * 2 + time * 8;
+        const startR = Math.max(width, height) * 0.25;
+        const r = startR * (1 - prog * 0.9) + Math.random() * 4;
+        const px = cx + Math.cos(ang) * r;
+        const py = cy + Math.sin(ang) * r;
+        context.globalAlpha = 0.8 * prog;
+        context.fillStyle = palette.glow;
+        context.shadowBlur = 8;
+        context.beginPath();
+        context.arc(px, py, 2 + prog * 3, 0, Math.PI * 2);
+        context.fill();
+      }
     }
     context.restore();
   };
 
   const draw = (time = performance.now()) => {
     if (!width) return;
-    // move shapes in world coords — vx/vy are world-units per frame (~60fps)
-    shapes.forEach(s => { s.x += s.vx / 60; s.y += s.vy / 60; bounce(s); maybeWaffle(s, time); s._wp = waffleSlash(s, time); });
-    // separation: gently push apart when shapes overlap (tendency to spread out)
+    // move shapes in world coords + repel from cursor + clamp speed
+    shapes.forEach(s => { s.x += s.vx / 60; s.y += s.vy / 60; repelFromCursor(s); bounce(s); const spd = Math.hypot(s.vx, s.vy); const maxSpd = 3.2; if (spd > maxSpd) { s.vx *= maxSpd / spd; s.vy *= maxSpd / spd; } maybeWaffle(s, time); s._wp = waffleSlash(s, time); });
+    // separation: gently push apart when shapes overlap
     for (let i = 0; i < shapes.length; i++) for (let j = i + 1; j < shapes.length; j++) {
       const a = shapes[i], b = shapes[j];
       const dx = a.x - b.x, dy = a.y - b.y;
@@ -290,6 +323,7 @@ function initAmbientScene() {
     const classified = links.map(([a, b]) => ({ a, b, fragments: projected[a] && projected[b] ? classifyProjectedLink({ a: nodes[a], b: nodes[b], screenA: projected[a], screenB: projected[b] }, triangles, camera) : [] }));
     context.lineWidth = .8; context.strokeStyle = palette.line;
     classified.forEach(({ a, b, fragments }) => fragments.filter(p => p.occluded).forEach(p => drawLink(pt(projected[a], projected[b], p.u0), pt(projected[a], projected[b], p.u1), .35, true)));
+    // render meshes with vortex fade
     meshes.forEach((mesh, index) => {
       const faces = mesh.faces.map(face => face.indices.map(v => projectPoint(mesh.vertices[v], camera))).filter(face => face.every(Boolean));
       if (!faces.length) return;
@@ -297,11 +331,10 @@ function initAmbientScene() {
       const s = shapes[index];
       let meshAlpha = 1;
       if (s._wp) {
-        // fade shape out during vortex open, in during close
-        meshAlpha = s._wp.phase === 'open' ? (1 - s._wp.half) : s._wp.half;
-        meshAlpha = Math.max(meshAlpha, 0.08); // never fully invisible
+        if (s._wp.phase === 'break') meshAlpha = Math.max(1 - (s._wp.t - THIRD) / THIRD, 0.05);
+        else if (s._wp.phase === 'fuse') meshAlpha = Math.max((s._wp.t - THIRD * 2) / THIRD, 0.05);
       }
-      faces.forEach(face => { context.globalAlpha = .48 * meshAlpha; context.fillStyle = palette.face; context.beginPath(); context.moveTo(face[0].x, face[0].y); face.slice(1).forEach(p => context.lineTo(p.x, p.y)); context.closePath(); context.fill(); context.globalAlpha = .7 * meshAlpha; context.strokeStyle = palette.edge; context.setLineDash([]); context.stroke(); });
+      faces.forEach(face => { context.globalAlpha = .48 * meshAlpha; context.fillStyle = palette.face; context.beginPath(); context.moveTo(face[0].x, face[0].y); face.slice(1).forEach(p => context.lineTo(p.x, p.y)); context.closePath(); context.fill(); context.globalAlpha = 7 * meshAlpha; context.strokeStyle = palette.edge; context.setLineDash([]); context.stroke(); });
       drawScans(faces, bounds, index, time);
     });
     context.strokeStyle = palette.line;
@@ -309,23 +342,21 @@ function initAmbientScene() {
     context.fillStyle = palette.edge; context.globalAlpha = .65; context.setLineDash([]);
     projected.forEach(p => { if (!p) return; context.beginPath(); context.arc(p.x, p.y, 1.6, 0, Math.PI * 2); context.fill(); });
     context.globalAlpha = 1;
-    // draw per-shape vortex slash (open→destroy→close→reveal)
+    // draw per-shape vortex slash and trigger shape swap at fuse start
     shapes.forEach((s) => {
       if (s._wp) {
         const proj = projectPoint(posOf(s), camera);
         if (proj) drawVortex(s, time, proj);
-        // trigger shape swap when vortex crosses midpoint (halfway through cycle)
-        const { phase, half } = s._wp;
-        if (phase === 'close' && half < 0.05) {
+        if (s._wp.phase === 'fuse' && s._wp.t < THIRD * 2 + 0.05) {
           s.justTriggered = true;
         }
       }
       if (s.justTriggered) { triggerWaffle(s); s.justTriggered = false; }
     });
+
   };
 
   const resize = () => { width = innerWidth; height = innerHeight; ratio = Math.min(devicePixelRatio || 1, 1.25, Math.sqrt(2000000 / (width * height))); canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio); context.setTransform(ratio, 0, 0, ratio, 0, 0); Object.assign(camera, { width, height, focal: Math.min(width, height) * .92 });
-    // world bounds at screen edge, using representative depth 9 (mid of shape depth range)
     const refDepth = 9;
     X_BOUND = (width / 2) * refDepth / camera.focal;
     Y_BOUND = (height / 2) * refDepth / camera.focal;
@@ -335,6 +366,8 @@ function initAmbientScene() {
   const schedule = () => { if (!frame && canAnimate()) frame = requestAnimationFrame(loop); };
 
   addEventListener('resize', resize);
+  const hitShape = (px, py) => shapes.find(s => { const proj = projectPoint({ x: s.x, y: s.y, z: s.depth + s.size * 2 }, camera); if (!proj) return false; const radius = s.size * camera.focal / s.depth * .35; return Math.hypot(proj.x - px, proj.y - py) < radius; });
+  addEventListener('mousemove', (e) => { cursorScreenX = e.clientX; cursorScreenY = e.clientY; cursorX = (e.clientX - width / 2) * 9 / camera.focal; cursorY = -(e.clientY - height / 2) * 9 / camera.focal; nearShape = hitShape(e.clientX, e.clientY); canvas.style.cursor = nearShape ? 'crosshair' : 'default'; });
   document.addEventListener('visibilitychange', () => document.hidden ? stop() : schedule());
   document.addEventListener('portfolio-themechange', () => { refreshPalette(); draw(); });
   reducedMotion.addEventListener('change', () => reducedMotion.matches ? (stop(), draw()) : schedule());
