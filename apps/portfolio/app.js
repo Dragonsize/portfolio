@@ -148,8 +148,8 @@ function initAmbientScene() {
   const shapes = [...Array(initialCount)].map(() => {
     const m = meshTypeRng();
     return {
-      x: rand(-0.5, 0.5), y: rand(-0.4, 0.4),
-      vx: rand(1.5, 3.5) * (Math.random() < .5 ? 1 : -1), vy: rand(0.8, 2) * (Math.random() < .5 ? 1 : -1),
+      x: rand(-6, 6), y: rand(-4.5, 4.5),
+      vx: rand(0.8, 2.5) * (Math.random() < .5 ? 1 : -1), vy: rand(0.5, 1.5) * (Math.random() < .5 ? 1 : -1),
       depth: rand(7, 12), size: rand(.4, 1.2),
       meshType: m, rotX: rand(0, 6), rotY: rand(0, 6), rotZ: rand(0, 6),
       angX: rand(.0002, .0006), angY: rand(.0002, .0006), angZ: rand(.0001, .0004)
@@ -200,9 +200,12 @@ function initAmbientScene() {
 
   const waffleSlash = (s, time) => {
     if (!s.slash) return null;
-    const t = (time - s.slash.startedAt) / 200;
+    const t = (time - s.slash.startedAt) / 400; // 400ms vortex cycle
     if (t >= 1) { s.slash = null; return null; }
-    return { alpha: 1 - t, phase: t };
+    // phase: 0-0.5 opening + destroy, 0.5-1 closing + reveal
+    const phase = t < 0.5 ? 'open' : 'close';
+    const half = t < 0.5 ? t * 2 : (t - 0.5) * 2; // 0-1 within half
+    return { alpha: 1 - t * 0.6, phase, half, t };
   };
 
   const maybeWaffle = (s, time) => {
@@ -220,33 +223,50 @@ function initAmbientScene() {
     if (!s.slash || s.slash.triggered) return;
     s.slash.triggered = true;
     s.meshType = pickMesh(allMeshes[s.meshType]);
-    s.vx = rand(2, 6) * (Math.random() < .5 ? 1 : -1);
-    s.vy = rand(1, 4) * (Math.random() < .5 ? 1 : -1);
+    s.vx = rand(.8, 2.5) * (Math.random() < .5 ? 1 : -1);
+    s.vy = rand(.5, 1.5) * (Math.random() < .5 ? 1 : -1);
     s.angX = rand(.0002, .0006); s.angY = rand(.0002, .0006); s.angZ = rand(.0001, .0004);
     s.size = rand(.4, 1.1);
     s.depth = rand(6, 12);
   };
 
-  const drawWaffle = (s, time, proj) => {
-    const wp = waffleSlash(s, time); if (!wp) return;
-    const angle = s.slash.angle;
-    const lines = s.slash.lines;
-    const len = Math.max(width, height) * .7;
-    const centerX = proj.x, centerY = proj.y;
-    const spacing = len / (lines - 1) || len;
+  const drawVortex = (s, time, proj) => {
+    const wp = s._wp;
+    if (!wp) return;
+    const { phase, half, alpha, t } = wp;
+    const cx = proj.x, cy = proj.y;
+    const isMidpoint = phase === 'close' && half < 0.05; // just crossed midpoint
+    // vortex ring radius: grows on open, shrinks on close
+    const maxR = Math.min(width, height) * 0.18;
+    const r = phase === 'open' ? half * maxR : (1 - half) * maxR;
+    const arms = 6, ringCount = 3;
     context.save();
-    context.globalAlpha = wp.alpha * .8;
-    context.strokeStyle = palette.glow;
-    context.lineWidth = 3 * wp.alpha;
-    context.shadowColor = palette.glow;
-    context.shadowBlur = 12;
-    for (let i = 0; i < lines; i++) {
-      const offset = (i - (lines - 1) / 2) * spacing * .25;
-      const x0 = centerX + Math.cos(angle) * len - Math.sin(angle) * offset;
-      const y0 = centerY + Math.sin(angle) * len + Math.cos(angle) * offset;
-      const x1 = centerX - Math.cos(angle) * len - Math.sin(angle) * offset;
-      const y1 = centerY - Math.sin(angle) * len + Math.cos(angle) * offset;
-      context.beginPath(); context.moveTo(x0, y0); context.lineTo(x1, y1); context.stroke();
+    // spinning rings
+    for (let ring = 0; ring < ringCount; ring++) {
+      const ringR = r * (0.4 + ring * 0.3);
+      const armAlpha = alpha * 0.55 * (1 - ring / ringCount);
+      context.globalAlpha = armAlpha;
+      context.strokeStyle = palette.glow;
+      context.lineWidth = 2.5 - ring * 0.5;
+      context.shadowColor = palette.glow;
+      context.shadowBlur = 10;
+      for (let a = 0; a < arms; a++) {
+        const angle = (a / arms) * Math.PI * 2 + t * 12 + ring * 0.5; // spin
+        const sweep = Math.PI * 0.55;
+        context.beginPath();
+        context.arc(cx, cy, ringR, angle, angle + sweep);
+        context.stroke();
+      }
+    }
+    // center flash at midpoint
+    if (isMidpoint) {
+      context.globalAlpha = 0.85;
+      context.shadowColor = '#fff';
+      context.shadowBlur = 25;
+      context.fillStyle = '#fff';
+      context.beginPath();
+      context.arc(cx, cy, maxR * 0.35, 0, Math.PI * 2);
+      context.fill();
     }
     context.restore();
   };
@@ -274,7 +294,14 @@ function initAmbientScene() {
       const faces = mesh.faces.map(face => face.indices.map(v => projectPoint(mesh.vertices[v], camera))).filter(face => face.every(Boolean));
       if (!faces.length) return;
       const bounds = meshBounds(faces);
-      faces.forEach(face => { context.globalAlpha = .48; context.fillStyle = palette.face; context.beginPath(); context.moveTo(face[0].x, face[0].y); face.slice(1).forEach(p => context.lineTo(p.x, p.y)); context.closePath(); context.fill(); context.globalAlpha = .7; context.strokeStyle = palette.edge; context.setLineDash([]); context.stroke(); });
+      const s = shapes[index];
+      let meshAlpha = 1;
+      if (s._wp) {
+        // fade shape out during vortex open, in during close
+        meshAlpha = s._wp.phase === 'open' ? (1 - s._wp.half) : s._wp.half;
+        meshAlpha = Math.max(meshAlpha, 0.08); // never fully invisible
+      }
+      faces.forEach(face => { context.globalAlpha = .48 * meshAlpha; context.fillStyle = palette.face; context.beginPath(); context.moveTo(face[0].x, face[0].y); face.slice(1).forEach(p => context.lineTo(p.x, p.y)); context.closePath(); context.fill(); context.globalAlpha = .7 * meshAlpha; context.strokeStyle = palette.edge; context.setLineDash([]); context.stroke(); });
       drawScans(faces, bounds, index, time);
     });
     context.strokeStyle = palette.line;
@@ -282,11 +309,16 @@ function initAmbientScene() {
     context.fillStyle = palette.edge; context.globalAlpha = .65; context.setLineDash([]);
     projected.forEach(p => { if (!p) return; context.beginPath(); context.arc(p.x, p.y, 1.6, 0, Math.PI * 2); context.fill(); });
     context.globalAlpha = 1;
-    // draw per-shape waffle slashes and trigger on completion
+    // draw per-shape vortex slash (open→destroy→close→reveal)
     shapes.forEach((s) => {
       if (s._wp) {
         const proj = projectPoint(posOf(s), camera);
-        if (proj) drawWaffle(s, time, proj);
+        if (proj) drawVortex(s, time, proj);
+        // trigger shape swap when vortex crosses midpoint (halfway through cycle)
+        const { phase, half } = s._wp;
+        if (phase === 'close' && half < 0.05) {
+          s.justTriggered = true;
+        }
       }
       if (s.justTriggered) { triggerWaffle(s); s.justTriggered = false; }
     });
