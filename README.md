@@ -23,9 +23,22 @@ npm run check
 npm test
 ```
 
-## Local development
+## Run locally (no Vercel account needed)
 
-Run each Vercel app in its own terminal:
+```bash
+npm start              # portfolio http://127.0.0.1:3000 and labs http://127.0.0.1:3001
+npm run start:labs     # labs only
+npm run start:portfolio
+node scripts/local-server.js labs --port 4000   # custom port
+```
+
+`scripts/local-server.js` has no dependencies. It serves the static files, runs the real handlers in `apps/*/api/` with a Vercel-style `req`/`res`, and applies the headers from each `vercel.json` (including the CSP), so problems show up locally the same way they would in production. It binds to `127.0.0.1` by default; passing `--host 0.0.0.0` exposes it to your network and prints a warning. It is a dev server, not a production host: use Vercel for the public deployment.
+
+The rate limiter and visitor-location header only behave fully on Vercel. Locally `/api/geo` returns 204 (no location headers), so the globe uses the browser timezone.
+
+## Local development with the Vercel CLI
+
+Use this if you want exact Vercel behaviour. Run each app in its own terminal:
 
 ```bash
 npm run dev:portfolio  # http://localhost:3000
