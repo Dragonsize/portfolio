@@ -2,42 +2,35 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { CHALLENGES, challengeById } from '../apps/labs/shared/challenge-registry.js';
-import { knownChallenge, runScenario, verifyFlag } from '../apps/labs/api/_lib/lab-scenarios.js';
+import { INTERACTIVE } from '../apps/labs/shared/interactive-config.js';
+import { knownChallenge, verifyFlag } from '../apps/labs/api/_lib/lab-scenarios.js';
 
-const solveInputs = {
-  csrf: 'cross-site POST without token', auth: 'default access enabled', path: '../virtual://private', ssrf: 'lab://internal/catalog', secrets: 'diagnostic output enabled'
-};
-
-test('registry has eight unique valid challenge routes', () => {
+test('registry has eight unique request-driven labs with complete content', () => {
   assert.equal(CHALLENGES.length, 8);
   assert.equal(challengeById.size, 8);
   CHALLENGES.forEach((challenge) => {
     assert.match(challenge.endpoint, /^\/api\//);
     assert.ok(challenge.title && challenge.objectives.length && challenge.remediation.length);
+    assert.equal(challenge.interactive, true, `${challenge.id} is not interactive`);
+    const config = INTERACTIVE[challenge.id];
+    assert.ok(config, `${challenge.id} has no lab content`);
+    assert.ok(config.story && config.goal);
+    assert.ok(config.hints.length >= 4, `${challenge.id} needs at least four hints`);
+    assert.equal(config.patches.length, 3);
+    assert.equal(config.patches.filter((patch) => patch.correct).length, 1);
+    assert.ok(config.patches.every((patch) => patch.label && patch.code && patch.why));
+    config.links.forEach(([label, href]) => { assert.ok(label); assert.match(href, /^https:\/\//); });
   });
 });
 
-test('each keyword simulator yields controlled evidence and a verifier-only flag', () => {
-  for (const challenge of CHALLENGES.filter((item) => !item.interactive)) {
-    const initial = runScenario(challenge.id, 'ordinary observation');
-    assert.equal(initial.challengeId, challenge.id);
-    assert.equal(initial.flag, undefined);
-    const solved = runScenario(challenge.id, solveInputs[challenge.id]);
-    assert.equal(solved.status, 'evidence-found');
-    assert.match(solved.flag, /^flag\{lab_[a-z_]+\}$/);
-    assert.equal(verifyFlag(challenge.id, solved.flag), true);
-    assert.equal(verifyFlag(challenge.id, 'flag{wrong}'), false);
-  }
-});
-
-test('only registered scenarios are recognized', () => {
+test('only registered labs are recognized and wrong flags are rejected', () => {
   assert.equal(knownChallenge('unknown'), false);
-  assert.equal(runScenario('unknown', 'anything'), null);
-});
-
-test('SSRF simulator confirms no outbound request occurred', () => {
-  const result = runScenario('ssrf', 'lab://internal/catalog');
-  assert.equal(result.artifact.outboundRequestMade, false);
+  assert.equal(knownChallenge('sqli'), true);
+  assert.equal(verifyFlag('unknown', 'flag{x}'), false);
+  CHALLENGES.forEach(({ id }) => {
+    assert.equal(knownChallenge(id), true);
+    assert.equal(verifyFlag(id, 'flag{wrong}'), false);
+  });
 });
 
 test('Labs shell exposes Portfolio navigation, favicon, and theme modes', async () => {

@@ -84,6 +84,11 @@ export function renderInteractiveLab(challenge, { submitFlag, alreadySolved = fa
   if (challenge.id === 'sqli') buildSqli(app, appOut, appRequest);
   if (challenge.id === 'xss') buildXss(app, appOut, appRequest);
   if (challenge.id === 'jwt') buildJwt(app, appOut, appRequest);
+  if (challenge.id === 'csrf') buildCsrf(app, appOut, appRequest);
+  if (challenge.id === 'auth') buildAuth(app, appOut, appRequest);
+  if (challenge.id === 'path') buildPath(app, appOut, appRequest);
+  if (challenge.id === 'ssrf') buildSsrf(app, appOut, appRequest);
+  if (challenge.id === 'secrets') buildSecrets(app, appOut, appRequest);
   root.append(section('Target application', app, appOut));
 
   /* ---------- Repeater ---------- */
@@ -308,4 +313,154 @@ function renderJwt(out, data) {
   [['verified', String(data.verified)], ['reason', data.reason], ['session user', data.session?.user], ['session role', data.session?.role], ['build', data.build]].forEach(([k, v]) => { if (v !== undefined) facts.append(el('li', '', `${k}: ${v}`)); });
   out.append(facts);
   if (data.adminPanel) out.append(el('p', 'alert-box', `${data.adminPanel.message} ${data.adminPanel.internalNote}`));
+}
+
+/* ---------- shared helpers for the form-based labs ---------- */
+function formApp(app, { fields, submit }, onSubmit) {
+  const form = el('form', 'app-form');
+  const grid = el('div', 'fields');
+  const inputs = {};
+  fields.forEach((spec) => {
+    let control;
+    if (spec.options) {
+      control = el('select', 'lab-input');
+      spec.options.forEach(([value, label]) => { const option = el('option', '', label); option.value = value; control.append(option); });
+    } else {
+      control = el('input', 'lab-input');
+      control.autocomplete = 'off';
+      if (spec.placeholder) control.placeholder = spec.placeholder;
+    }
+    if (spec.value !== undefined) control.value = spec.value;
+    control.name = spec.name;
+    control.setAttribute('aria-label', spec.label);
+    inputs[spec.name] = control;
+    grid.append(field(spec.label, control));
+  });
+  form.append(grid, button(submit, 'button', 'submit'));
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    await onSubmit(Object.fromEntries(Object.entries(inputs).map(([name, control]) => [name, control.value])), inputs);
+  });
+  app.append(form);
+  return { inputs };
+}
+
+// Shows any lab response: the error, simple facts, and nested data as readable blocks.
+function renderResult(out, data) {
+  out.replaceChildren();
+  if (!data || typeof data !== 'object') return;
+  if (data.error) out.append(el('p', 'app-error', String(data.error)));
+  const facts = el('ul', 'facts');
+  const blocks = [];
+  Object.entries(data).forEach(([key, value]) => {
+    if (key === 'error') return;
+    if ((value !== null && typeof value === 'object') || key === 'content') blocks.push([key, value]);
+    else facts.append(el('li', '', `${key}: ${value}`));
+  });
+  if (facts.childElementCount) out.append(facts);
+  blocks.forEach(([key, value]) => {
+    const pre = el('pre', 'output result-block');
+    pre.textContent = `${key}\n${typeof value === 'string' ? value : JSON.stringify(value, null, 2)}`;
+    out.append(pre);
+  });
+}
+const nonEmpty = (values) => Object.fromEntries(Object.entries(values).filter(([, value]) => value !== ''));
+const formBody = (values) => new URLSearchParams(nonEmpty(values)).toString();
+
+/* ---------- CSRF app ---------- */
+function buildCsrf(app, out, request) {
+  const load = button('1. Load my session', 'button quiet');
+  const info = el('p', 'muted-note', 'Browsers do not let a web page set the Origin header, so this form sends it as a field. Burp can send a real Origin header.');
+  app.append(load, info);
+  const { inputs } = formApp(app, {
+    submit: '2. Send transfer',
+    fields: [
+      { name: 'to', label: 'Pay to', value: 'friend' },
+      { name: 'amount', label: 'Amount (1-1000)', value: '25' },
+      { name: 'origin', label: 'Origin the request comes from', value: 'https://bank.lab' },
+      { name: 'token', label: 'Anti-forgery token', placeholder: '(empty)' },
+      { name: 'method', label: 'Method', options: [['POST', 'POST'], ['GET', 'GET']] }
+    ]
+  }, async (values) => {
+    const { method, ...rest } = values;
+    const outcome = await request(method === 'GET'
+      ? { method: 'GET', query: formBody(rest) }
+      : { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formBody(rest) });
+    if (outcome?.json) renderResult(out, outcome.json);
+  });
+  load.addEventListener('click', async () => {
+    const outcome = await request({ method: 'GET' });
+    if (!outcome?.json) return;
+    if (outcome.json.csrfToken) inputs.token.value = outcome.json.csrfToken;
+    renderResult(out, outcome.json);
+  });
+}
+
+/* ---------- Auth app ---------- */
+function buildAuth(app, out, request) {
+  let failures = 0;
+  const counter = el('p', 'muted-note', 'Failed attempts so far: 0');
+  formApp(app, {
+    submit: 'Sign in',
+    fields: [
+      { name: 'user', label: 'Username', placeholder: 'alice' },
+      { name: 'password', label: 'Password', placeholder: '••••••••' }
+    ]
+  }, async (values) => {
+    const outcome = await request({ method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: formBody({ ...values, attempt: String(failures) }) });
+    if (!outcome?.json) return;
+    if (!outcome.json.authenticated) { failures += 1; counter.textContent = `Failed attempts so far: ${failures}`; }
+    renderResult(out, outcome.json);
+  });
+  app.append(counter);
+}
+
+/* ---------- Path traversal app ---------- */
+function buildPath(app, out, request) {
+  const list = button('List documents', 'button quiet');
+  app.append(list);
+  formApp(app, {
+    submit: 'Open file',
+    fields: [
+      { name: 'file', label: 'File in docs/', value: 'guide.txt' },
+      { name: 'level', label: 'Defence level', options: [['1', 'Level 1: no filter'], ['2', 'Level 2: removes "../" once']] }
+    ]
+  }, async (values) => {
+    const outcome = await request({ method: 'GET', query: formBody(values) });
+    if (outcome?.json) renderResult(out, outcome.json);
+  });
+  list.addEventListener('click', async () => {
+    const outcome = await request({ method: 'GET' });
+    if (outcome?.json) renderResult(out, outcome.json);
+  });
+}
+
+/* ---------- SSRF app ---------- */
+function buildSsrf(app, out, request) {
+  formApp(app, {
+    submit: 'Preview link',
+    fields: [
+      { name: 'url', label: 'Link to preview', value: 'http://catalog.lab/products' },
+      { name: 'level', label: 'Defence level', options: [['1', 'Level 1: no filter'], ['2', 'Level 2: blocks localhost, 127.0.0.1 and more']] }
+    ]
+  }, async (values) => {
+    const outcome = await request({ method: 'GET', query: formBody(values) });
+    if (outcome?.json) renderResult(out, outcome.json);
+  });
+}
+
+/* ---------- Secrets app ---------- */
+function buildSecrets(app, out, request) {
+  const quick = el('div', 'quick-links');
+  const visit = async (path) => {
+    const outcome = await request({ method: 'GET', query: formBody({ path }) });
+    if (outcome?.json) renderResult(out, outcome.json);
+  };
+  ['/', '/status', '/robots.txt'].forEach((path) => {
+    const link = button(path, 'button quiet');
+    link.addEventListener('click', () => { inputs.path.value = path; visit(path); });
+    quick.append(link);
+  });
+  app.append(quick);
+  const { inputs } = formApp(app, { submit: 'Request page', fields: [{ name: 'path', label: 'Page to request', value: '/' }] }, async (values) => visit(values.path));
 }

@@ -105,7 +105,7 @@ button:disabled{border-color:var(--border);background:transparent;color:var(--di
 .tag.diff-beginner{color:var(--good);border-color:currentColor}
 .tag.diff-intermediate{color:var(--warn);border-color:currentColor}
 .tag.diff-advanced{color:var(--hard);border-color:currentColor}
-.tag.done{background:var(--accent-strong);border-color:var(--accent-strong);color:#fff;font-weight:700}
+.tag.done{background:var(--accent-strong);border-color:var(--accent-strong);color:#fff;font-weight:700;white-space:nowrap;flex:none}
 .lab-card .button{align-self:start;margin-top:auto}
 
 /* dialog */

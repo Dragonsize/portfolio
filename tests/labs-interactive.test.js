@@ -15,9 +15,9 @@ function fakeRes() {
   return { statusCode: 0, headers: {}, body: undefined, ended: false, setHeader(k, v) { this.headers[k] = v; }, status(c) { this.statusCode = c; return this; }, json(b) { this.body = b; return this; }, end() { this.ended = true; return this; } };
 }
 
-test('three labs are interactive, have config, and are known to the verifier', () => {
+test('all eight labs are interactive, have config, and are known to the verifier', () => {
   const interactive = CHALLENGES.filter((c) => c.interactive).map((c) => c.id).sort();
-  assert.deepEqual(interactive, ['jwt', 'sqli', 'xss']);
+  assert.deepEqual(interactive, ['auth', 'csrf', 'jwt', 'path', 'secrets', 'sqli', 'ssrf', 'xss']);
   interactive.forEach((id) => {
     assert.ok(INTERACTIVE[id].hints.length >= 3);
     assert.equal(INTERACTIVE[id].patches.filter((p) => p.correct).length, 1);

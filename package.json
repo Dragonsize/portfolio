@@ -12,7 +12,7 @@
     "dev:portfolio": "vercel dev apps/portfolio --listen 3000",
     "dev:labs": "vercel dev apps/labs --listen 3001",
     "test": "node --test tests/*.test.js",
-    "check": "node --check scripts/local-server.js && node --check apps/portfolio/app.js && node --check apps/portfolio/data.js && node --check apps/portfolio/net-globe.js && node --check apps/portfolio/visitor-geo.js && node --check apps/portfolio/terminal.js && node --check apps/portfolio/api/geo.js && node --check apps/labs/app.js && node --check apps/labs/theme-init.js && node --check apps/labs/ambient-pulse.js && node --check apps/labs/shared/challenge-registry.js && node --check apps/labs/shared/progress-store.js && node --check apps/labs/api/_lib/lab-response.js && node --check apps/labs/api/_lib/lab-scenarios.js && node --check apps/labs/api/_lib/create-lab-handler.js && node --check apps/labs/api/lab-submit.js && node --check apps/labs/api/_lib/interactive-labs.js && node --check apps/labs/api/_lib/create-interactive-handler.js && node --check apps/labs/api/_lib/rate-limit.js && node --check apps/labs/interactive-ui.js && node --check apps/labs/shared/repeater.js && node --check apps/labs/shared/interactive-config.js",
+    "check": "node scripts/check-syntax.js",
     "deploy:portfolio": "vercel --prod apps/portfolio",
     "deploy:labs": "vercel --prod apps/labs"
   }

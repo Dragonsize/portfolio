@@ -3,7 +3,7 @@
 Two Vercel apps in one repository:
 
 - `apps/portfolio` - public portfolio: dark purple UI, an interactive wireframe network globe, and a small `nsh` terminal. No embedded vulnerable routes or challenge data.
-- `apps/labs` - standalone, simulation-only web-security labs. Three are request-driven (SQL injection, JWT, XSS) with a built-in request editor; five are still keyword-based.
+- `apps/labs` - standalone, simulation-only web-security labs. All eight are request-driven with a built-in request editor: SQL injection, JWT, XSS, CSRF, authentication, path traversal, SSRF and information exposure. Each has hints, a hidden flag to find, and a patch-and-replay fix phase.
 
 ## Safety boundary
 
@@ -77,18 +77,18 @@ Other portfolio files:
 
 - `shared/challenge-registry.js` - public card metadata and endpoint mapping. `interactive: true` marks the request-driven labs.
 - `shared/progress-store.js` - local versioned completion store.
-- `api/_lib/interactive-labs.js` - deterministic engines for sqli, jwt and xss, each with a vulnerable build and a patched build (`fixed=1`).
-- `api/_lib/create-interactive-handler.js` and `rate-limit.js` - HTTP wrapper that reads the query, JSON body, `Authorization: Bearer` header and `session` cookie, with a best-effort rate limit.
-- `api/_lib/lab-scenarios.js` - keyword-based scenarios for the remaining labs and flag verification for all labs.
+- `api/_lib/interactive-labs.js` and `interactive-labs-extra.js` - deterministic engines for all eight labs, each with a vulnerable build and a patched build (`fixed=1`). Flags sit inside leaked data and are never a response field.
+- `api/_lib/create-interactive-handler.js` and `rate-limit.js` - HTTP wrapper that reads the query, JSON or form body, `Authorization: Bearer` header, `session` cookie and `Origin` header, with a best-effort rate limit.
+- `api/_lib/lab-scenarios.js` - the small surface the flag verifier uses.
 - `api/lab-submit.js` - shared server-side flag verifier.
-- `interactive-ui.js`, `shared/repeater.js`, `shared/interactive-config.js` - the in-page request editor, hints and patch-and-replay phase.
+- `interactive-ui.js`, `shared/repeater.js`, `shared/interactive-config.js`, `shared/interactive-config-extra.js` - the in-page request editor, per-lab apps, hints and patch-and-replay phase. Edit lab text and patch options in the config files.
 
 Tools are optional. The Repeater panel covers everything in the browser, and Burp Suite works against each lab's own endpoint. Automated scanners (nmap, sqlmap, wpscan) are not needed and requests are rate limited.
 
 ## Quality checks
 
 ```bash
-npm run check  # JavaScript syntax checks
+npm run check  # syntax-checks every .js file under apps/, scripts/ and tests/
 npm test       # simulators, repeater parser, terminal, globe maths, geo
 ```
 

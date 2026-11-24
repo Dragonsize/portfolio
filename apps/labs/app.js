@@ -81,7 +81,7 @@ function renderGrid() {
     const heading = el('div');
     heading.append(el('p', 'eyebrow', challenge.category), el('h2', '', challenge.title));
     head.append(heading);
-    if (solved) head.append(el('span', 'tag done', 'Completed ✓'));
+    if (solved) head.append(el('span', 'tag done', 'Done ✓'));
     const tags = el('div', 'tags');
     tags.append(el('span', `tag diff-${challenge.difficulty.toLowerCase()}`, challenge.difficulty), el('span', 'tag', `${challenge.minutes} min`));
     if (challenge.interactive) tags.append(el('span', 'tag live', 'request-driven'));
@@ -102,23 +102,6 @@ function list(title, values) {
   return block;
 }
 
-function output(data) {
-  const result = el('pre', 'output');
-  result.textContent = JSON.stringify(data, null, 2);
-  return result;
-}
-
-async function runScenario(challenge, input) {
-  const response = await fetch(challenge.endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input })
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error?.message || 'Lab request failed.');
-  return data;
-}
-
 function openLab(id, opener) {
   activeChallenge = challengeById.get(id);
   if (!activeChallenge) return;
@@ -126,60 +109,14 @@ function openLab(id, opener) {
   document.querySelector('#dialog-title').textContent = activeChallenge.title;
   document.querySelector('#dialog-category').textContent = `${activeChallenge.category} · ${activeChallenge.difficulty}`;
   content.replaceChildren();
-  dialog.classList.toggle('wide', Boolean(activeChallenge.interactive));
-  if (activeChallenge.interactive) {
-    const intro = el('div', 'lab-panel');
-    intro.append(el('p', '', activeChallenge.description), list('Learning goals', activeChallenge.objectives), list('Defensive outcome', activeChallenge.remediation));
-    const challenge = activeChallenge;
-    content.append(intro, renderInteractiveLab(challenge, { submitFlag: (flag) => submitInteractiveFlag(challenge, flag), alreadySolved: store.has(challenge.id) }));
-    dialog.showModal();
-    content.querySelector('input, textarea, button')?.focus();
-    return;
-  }
-  const panel = el('div', 'lab-panel');
-  panel.append(el('p', '', activeChallenge.description), list('Learning goals', activeChallenge.objectives), list('Defensive outcome', activeChallenge.remediation));
-  const form = el('form', 'lab-form');
-  form.append(el('label', '', activeChallenge.control.label));
-  const row = el('div', 'form-row');
-  const input = el('input', 'lab-input');
-  input.name = 'input'; input.placeholder = activeChallenge.control.placeholder; input.autocomplete = 'off';
-  const run = el('button', 'button', 'Run simulation'); run.type = 'submit';
-  row.append(input, run);
-  const result = el('div');
-  form.append(row, result);
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    run.disabled = true;
-    try {
-      const data = await runScenario(activeChallenge, input.value);
-      result.replaceChildren(output(data));
-      if (data.flag) addSubmission(result, activeChallenge);
-    } catch (error) { result.replaceChildren(el('p', '', error.message)); }
-    finally { run.disabled = false; }
-  });
-  panel.append(form);
-  content.append(panel);
+  // Every lab is a request-driven simulation, so the dialog always uses the wide layout.
+  dialog.classList.add('wide');
+  const intro = el('div', 'lab-panel');
+  intro.append(el('p', '', activeChallenge.description), list('Learning goals', activeChallenge.objectives), list('Defensive outcome', activeChallenge.remediation));
+  const challenge = activeChallenge;
+  content.append(intro, renderInteractiveLab(challenge, { submitFlag: (flag) => submitInteractiveFlag(challenge, flag), alreadySolved: store.has(challenge.id) }));
   dialog.showModal();
-  input.focus();
-}
-
-function addSubmission(container, challenge, discoveredFlag) {
-  const form = el('form', 'lab-form');
-  form.append(el('h3', '', 'Submit simulation evidence'));
-  const row = el('div', 'form-row');
-  const input = el('input', 'lab-input'); input.placeholder = 'flag{...}'; input.autocomplete = 'off';
-  const button = el('button', 'button', 'Validate'); button.type = 'submit'; row.append(input, button); form.append(row);
-  form.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    const response = await fetch('/api/lab-submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challengeId: challenge.id, flag: input.value }) });
-    const data = await response.json();
-    if (!response.ok) { showToast(data.error?.message || 'Validation failed.'); return; }
-    store.markSolved(challenge.id);
-    renderProgress(); renderGrid();
-    showToast(`${challenge.title} marked complete on this browser.`);
-    form.replaceChildren(el('p', '', 'Completed. Keep the remediation guidance for future work.'));
-  });
-  container.append(form);
+  content.querySelector('input, textarea, button')?.focus();
 }
 
 async function submitInteractiveFlag(challenge, flag) {

@@ -21,6 +21,10 @@ export function collectParams(req) {
   for (const [key, value] of Object.entries(merged)) {
     if (['string', 'number'].includes(typeof value)) out[key] = String(value).slice(0, MAX_FIELD);
   }
+  // A real Origin header (for example sent by Burp) counts like the "origin" field the built-in editor uses.
+  if (out.origin === undefined && typeof req.headers?.origin === 'string') out.origin = req.headers.origin.slice(0, 80);
+  // Set by the server after merging, so a client cannot claim a different request method.
+  out.__method = String(req.method || 'GET');
   const auth = req.headers?.authorization;
   if (out.token === undefined && typeof auth === 'string' && /^bearer\s+/i.test(auth)) out.token = auth.replace(/^bearer\s+/i, '').slice(0, MAX_FIELD);
   if (out.token === undefined) {

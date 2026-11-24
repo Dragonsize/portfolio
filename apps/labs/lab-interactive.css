@@ -57,6 +57,10 @@
 .patch-option .code{margin:.4rem 0 0;padding:.5rem .6rem;background:var(--page);border:1px solid var(--border);font-size:.72rem;white-space:pre-wrap;overflow-wrap:anywhere}
 .replay-box{display:grid;gap:.6rem}
 .output.blocked{border-color:var(--accent)}
+.fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));gap:.6rem;margin-bottom:.6rem}
+.fields .lab-input{width:100%}
+.quick-links{display:flex;flex-wrap:wrap;gap:.4rem}
+.result-block{max-height:15rem}
 .link-list{margin:0;padding-left:1.2rem;display:grid;gap:.3rem;font-size:.8rem}
 
 @media(max-width:760px){

@@ -1,7 +1,9 @@
 // Per-lab content for the request-driven labs: story, hints, patch options and reading links.
 // Plain data so it is easy to edit. All strings are rendered with textContent.
 
-export const INTERACTIVE = Object.freeze({
+import { EXTRA_INTERACTIVE } from './interactive-config-extra.js';
+
+const CORE_INTERACTIVE = Object.freeze({
   sqli: {
     story: 'ShopLab sells security gear. Its search box builds a SQL query by pasting your text into it. One internal row is hidden from public results. Make the search return it, then read what it contains.',
     goal: 'Find the flag stored in the hidden internal row.',
@@ -60,6 +62,8 @@ export const INTERACTIVE = Object.freeze({
     ]
   }
 });
+
+export const INTERACTIVE = Object.freeze({ ...CORE_INTERACTIVE, ...EXTRA_INTERACTIVE });
 
 export const BURP_STEPS = Object.freeze([
   'Optional. Everything works in the built-in Repeater below, but you can use your own tools too.',

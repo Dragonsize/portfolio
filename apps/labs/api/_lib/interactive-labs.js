@@ -6,6 +6,8 @@
 // Each lab has two builds. The default build is vulnerable by design. Sending fixed=1 simulates the
 // patched build so learners can replay their exploit and watch the fix work.
 
+import { EXTRA_FLAGS, EXTRA_LABS } from './interactive-labs-extra.js';
+
 const FLAGS = Object.freeze({
   sqli: 'flag{uni0n_select_reveals_all}',
   jwt: 'flag{alg_none_is_never_trusted}',
@@ -125,7 +127,8 @@ function xssLab(params) {
   return { ok: true, status: 200, body };
 }
 
-const LABS = Object.freeze({ sqli: sqliLab, jwt: jwtLab, xss: xssLab });
+const LABS = Object.freeze({ sqli: sqliLab, jwt: jwtLab, xss: xssLab, ...EXTRA_LABS });
+const ALL_FLAGS = Object.freeze({ ...FLAGS, ...EXTRA_FLAGS });
 
 export function isInteractiveLab(id) { return Object.hasOwn(LABS, id); }
 
@@ -134,7 +137,7 @@ export function runInteractiveLab(id, params = {}) {
   return LABS[id](params && typeof params === 'object' ? params : {});
 }
 
-export function verifyInteractiveFlag(id, flag) { return Object.hasOwn(FLAGS, id) && FLAGS[id] === flag; }
+export function verifyInteractiveFlag(id, flag) { return Object.hasOwn(ALL_FLAGS, id) && ALL_FLAGS[id] === flag; }
 
 // exported for tests
 export const _test = Object.freeze({ b64urlEncode, demoSignature, SECRETS, NOW });

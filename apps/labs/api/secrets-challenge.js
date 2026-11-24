@@ -1,2 +1,2 @@
-import { createLabHandler } from './_lib/create-lab-handler.js';
-export default createLabHandler('secrets');
+import { createInteractiveHandler } from './_lib/create-interactive-handler.js';
+export default createInteractiveHandler('secrets');
