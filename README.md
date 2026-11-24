@@ -2,12 +2,12 @@
 
 Two Vercel apps in one repository:
 
-- `apps/portfolio` — public, terminal-inspired portfolio. No embedded vulnerable routes or challenge data.
-- `apps/labs` — standalone educational simulations for common web-security concepts.
+- `apps/portfolio` - public portfolio: dark purple UI, an interactive wireframe network globe, and a small `nsh` terminal. No embedded vulnerable routes or challenge data.
+- `apps/labs` - standalone, simulation-only web-security labs. Three are request-driven (SQL injection, JWT, XSS) with a built-in request editor; five are still keyword-based.
 
 ## Safety boundary
 
-Labs are deterministic fixtures, not vulnerable services. They never execute supplied JavaScript, reach external URLs, read host files, create real accounts/sessions, or expose credentials. Use them only for education in this repository's lab environment.
+Labs are deterministic fixtures, not vulnerable services. They never execute supplied JavaScript, reach external URLs, read host files, create real accounts or sessions, or expose credentials. Use them only for education in this repository's lab environment.
 
 Progress is local to browser storage. It is not an identity, score, leaderboard, or security control.
 
@@ -15,114 +15,81 @@ Progress is local to browser storage. It is not an identity, score, leaderboard,
 
 - Node.js 20+
 - npm 10+
-- Vercel account for deployments
+- Vercel CLI and account for local serverless functions and deployments
 
 ```bash
-npm install
+npm ci
 npm run check
 npm test
 ```
 
-`npm install` generates `package-lock.json`; commit it. CI and clean installs should then use:
-
-```bash
-npm ci
-```
-
-This checkout does not include a lockfile yet, so run `npm install` once before `npm ci`.
-
 ## Local development
 
-Run each Vercel app in separate terminal:
+Run each Vercel app in its own terminal:
 
 ```bash
 npm run dev:portfolio  # http://localhost:3000
 npm run dev:labs       # http://localhost:3001
 ```
 
-`npm run dev` starts portfolio app. `vercel dev` is required because labs include Vercel Serverless Functions.
-
-Before local portfolio-to-labs demos, update `labsUrl` in `apps/portfolio/app.js` to `http://localhost:3001`. Restore production URL before deployment.
+`vercel dev` is required because both apps contain Vercel Serverless Functions (`/api/geo` in the portfolio, `/api/*` in the labs). A plain static server serves the pages but not the APIs; the portfolio still works without `/api/geo` and falls back to the browser timezone.
 
 ## Deploy separate Vercel projects
 
-Recommended domain layout:
+1. Push the repository to GitHub.
+2. In Vercel, import it once for the portfolio and set **Root Directory** to `apps/portfolio`.
+3. Import it again for the labs and set **Root Directory** to `apps/labs`.
+4. Attach your domains, deploy previews, verify, then promote.
 
-- Portfolio: `example.com`
-- Labs: `labs.example.com`
-
-1. Push repository to GitHub, GitLab, or Bitbucket.
-2. In Vercel, import repository for portfolio project. Set **Root Directory** to `apps/portfolio`.
-3. Import same repository again for labs project. Set **Root Directory** to `apps/labs`.
-4. Attach portfolio domain to first project and labs subdomain to second project.
-5. Set production labs URL in `apps/portfolio/app.js`.
-6. Update placeholder canonical domain in `apps/portfolio/robots.txt` and `apps/portfolio/sitemap.xml`.
-7. Deploy preview URLs, verify them, then promote each project.
-
-Vercel Hobby commonly supports multiple projects and subdomains. Confirm current usage limits and plan terms in Vercel dashboard before launch.
-
-CLI alternatives:
+CLI alternatives (each directory is linked to its own project when prompted):
 
 ```bash
 npm run deploy:portfolio
 npm run deploy:labs
 ```
 
-Link each directory to its own Vercel project when prompted.
-
 ## Portfolio content
 
-`apps/portfolio/app.js` contains `PORTFOLIO` configuration:
+All site content lives in `apps/portfolio/data.js`: identity, taglines, stats, projects, experience, competitions, certifications, skills and contact links. The terminal's virtual files are generated from the same data, so editing it updates both.
 
-- labs URL
-- project drafts and verified URLs
-- skills
-- contact links
+Do not publish unverified certifications, metrics or clients. Contact is text links only; no form backend exists. Keep personal documents (CV, notes, saved pages) out of the repository.
 
-Replace all placeholders before production. Do not publish unverified certifications, metrics, clients, social URLs, or a résumé link.
+Other portfolio files:
 
-Contact is deliberate text links only. No contact form backend exists.
+- `net-globe.js` - the hero globe (hosts, packet arcs, click-to-scan, visitor marker).
+- `visitor-geo.js` and `api/geo.js` - approximate visitor location from Vercel's IP headers, with a timezone fallback. Nothing is stored or logged.
+- `terminal.js` - the `nsh` shell over a read-only virtual home directory.
 
 ## Labs architecture
 
-- `apps/labs/shared/challenge-registry.js` — public card metadata and explicit endpoint mapping.
-- `apps/labs/shared/progress-store.js` — local versioned completion store.
-- `apps/labs/api/_lib/lab-scenarios.js` — server-only deterministic scenario/flag logic.
-- `apps/labs/api/lab-submit.js` — shared server-side flag verifier.
+- `shared/challenge-registry.js` - public card metadata and endpoint mapping. `interactive: true` marks the request-driven labs.
+- `shared/progress-store.js` - local versioned completion store.
+- `api/_lib/interactive-labs.js` - deterministic engines for sqli, jwt and xss, each with a vulnerable build and a patched build (`fixed=1`).
+- `api/_lib/create-interactive-handler.js` and `rate-limit.js` - HTTP wrapper that reads the query, JSON body, `Authorization: Bearer` header and `session` cookie, with a best-effort rate limit.
+- `api/_lib/lab-scenarios.js` - keyword-based scenarios for the remaining labs and flag verification for all labs.
+- `api/lab-submit.js` - shared server-side flag verifier.
+- `interactive-ui.js`, `shared/repeater.js`, `shared/interactive-config.js` - the in-page request editor, hints and patch-and-replay phase.
 
-Each lab endpoint returns JSON:
-
-```json
-{
-  "challengeId": "sqli",
-  "status": "active",
-  "artifact": {},
-  "hint": "...",
-  "learning": ["..."],
-  "remediation": ["..."]
-}
-```
-
-Supported concepts: input/query boundaries, output encoding, request integrity, token validation, authentication decisions, virtual path handling, outbound request controls, and information exposure.
+Tools are optional. The Repeater panel covers everything in the browser, and Burp Suite works against each lab's own endpoint. Automated scanners (nmap, sqlmap, wpscan) are not needed and requests are rate limited.
 
 ## Quality checks
 
 ```bash
 npm run check  # JavaScript syntax checks
-npm test       # registry and deterministic simulator tests
+npm test       # simulators, repeater parser, terminal, globe maths, geo
 ```
 
 Manual release checks:
 
-1. Keyboard-test portfolio navigation and terminal: `~`, Tab, history arrows, Ctrl+L, Escape, and focus restoration.
-2. Test mobile width, 200% zoom, and reduced-motion mode.
-3. Open and complete each lab; reload; confirm local progress; test reset.
-4. Inspect preview response headers. Portfolio must not expose lab APIs, debug headers, fake secrets, or unsafe CSP.
-5. Check `robots.txt` and `sitemap.xml` after configuring real domain.
+1. Keyboard-test the portfolio and terminal: backtick, Tab, history arrows, Ctrl+L, Ctrl+C, Escape and focus restoration.
+2. Test mobile width, 200% zoom and reduced-motion mode.
+3. Open and complete each lab, reload, confirm local progress, test reset.
+4. Inspect preview response headers. The portfolio must not expose lab APIs, debug headers, fake secrets or an unsafe CSP.
+5. After deploying, confirm `/api/geo` returns data and is not caught by the 404 route.
 
 ## Security reporting
 
-No security-reporting address configured yet. Add `SECURITY.md` with a verified contact before public launch.
+No security-reporting address is configured yet. Add a `SECURITY.md` with a verified contact before public launch.
 
 ## License
 

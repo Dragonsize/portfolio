@@ -3,7 +3,7 @@ node_modules/
 .pnpm-store/
 .npm/
 .yarn/
-KNOWLEDGE_BASE.md
+
 # Build output and tooling caches
 dist/
 build/
@@ -27,7 +27,6 @@ apps/*/.vercel/
 *.log
 npm-debug.log*
 yarn-debug.log*
-yarn-error.log*
 pnpm-debug.log*
 
 # OS and editor state
@@ -38,14 +37,22 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 
-# Claude local state and repository-specific instructions
+# Claude local state and repository-specific notes
 .claude/settings.local.json
 .claude/worktrees/
 CLAUDE.md
-.claude/worktrees/
+KNOWLEDGE_BASE.md
 
 # Local frontend design-template reference
 a/
+
+# Personal scratch files kept out of the public repo.
+# auth.html is a saved logged-in university page (contains a session key and user id).
+/auth.html
+/inspire.txt
+/network-prep.md
+# Root-level screenshots (UI checks, reference captures)
+/*.png
 
 # Temporary files
 *.tmp
