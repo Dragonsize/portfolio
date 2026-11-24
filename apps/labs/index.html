@@ -1,30 +1,44 @@
 <!doctype html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow">
-  <meta name="color-scheme" content="light dark">
+  <meta name="color-scheme" content="dark light">
   <meta name="description" content="Deterministic, simulation-only web security learning labs.">
   <title>Security Learning Labs</title>
-  <script>try{const theme=localStorage.getItem('labs-theme');if(theme==='dark'||theme==='light')document.documentElement.dataset.theme=theme}catch{}</script>
+  <script src="theme-init.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="naven-mark-transparent.png" type="image/png">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="lab-interactive.css">
 </head>
 <body>
   <div class="ambient-visual" aria-hidden="true"><canvas id="lab-signal-field"></canvas></div>
-  <a class="skip-link" href="#labs">Skip to labs</a>
-  <header class="site-header"><nav class="nav" aria-label="Learning labs navigation"><a class="brand" href="/">security-labs_</a><div class="header-actions"><div class="nav-links"><a href="https://naventran.vercel.app/">PORTFOLIO ↗</a><a href="/" aria-current="page">LABS</a></div><button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="false" aria-label="Switch to dark theme">[ theme: light ]</button></div></nav></header>
+  <a class="skip-link" href="#catalog">Skip to labs</a>
+  <header class="site-header"><nav class="nav" aria-label="Learning labs navigation"><a class="brand" href="/" aria-label="Security labs home"><img src="naven-mark-transparent.png" alt="" width="26" height="30"><span>security<b>-</b>labs_</span></a><div class="header-actions"><div class="nav-links"><a href="https://naventran.vercel.app/">PORTFOLIO ↗</a><a href="/" aria-current="page">LABS</a></div><button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light theme">[ theme: dark ]</button></div></nav></header>
   <main id="labs">
     <section class="hero section">
-      <div class="hero-copy"><p class="prompt-line">visitor@labs:~$ ls ./simulations</p><h1>Security learning labs.<br><span>Safe by design.</span></h1><p class="muted">Eight deterministic exercises. No real targets, filesystem reads, outbound requests, account bypasses, or executable payloads.</p></div>
-      <section class="terminal-frame" aria-label="Safety notice"><header>labs@security: ~/readme</header><div class="notice" role="note"><p class="prompt-line">[ authorized learning only ]</p><p><strong>Use only this lab:</strong> scenarios model security concepts through controlled fixtures. Progress stays in this browser.</p></div></section>
+      <div class="hero-copy">
+        <p class="prompt-line">visitor@labs:~$ ls ./simulations</p>
+        <h1>Security learning labs.<br><span>Safe by design.</span></h1>
+        <p class="muted lede">Break a simulated app, read what it leaks, then patch it and replay your attack. No real targets, no filesystem reads, no outbound requests, no executable payloads.</p>
+        <ul class="stat-chips" aria-label="Lab overview"><li><b id="stat-total">8</b> labs</li><li><b id="stat-live">3</b> request-driven</li><li><b>0</b> tools required</li></ul>
+        <div class="hero-actions"><a class="button solid" href="#catalog">&gt; start a lab</a><a class="button quiet" href="#rules">&gt; read the rules</a></div>
+      </div>
+      <aside class="terminal-frame how" aria-label="How a lab works">
+        <header><span class="term-dots" aria-hidden="true"><i></i><i></i><i></i></span>labs@security: ~/how-it-works</header>
+        <ol class="steps">
+          <li><b>01</b><div><strong>Probe</strong><span>Use the fake app and read what it reveals.</span></div></li>
+          <li><b>02</b><div><strong>Exploit</strong><span>Edit the request until the flag leaks.</span></div></li>
+          <li><b>03</b><div><strong>Patch</strong><span>Choose the real fix and replay your attack.</span></div></li>
+        </ol>
+        <div class="notice" role="note"><p class="prompt-line">[ authorized learning only ]</p><p><strong>Use only this lab:</strong> scenarios model security concepts through controlled fixtures. Progress stays in this browser.</p></div>
+      </aside>
     </section>
-    <section class="panel rules" aria-label="Lab rules">
+    <section id="rules" class="panel rules" aria-label="Lab rules" data-reveal>
       <header><p class="prompt-line">visitor@labs:~$ cat RULES.md</p><h2>// RULES</h2></header>
       <ul>
         <li><strong>No tools required.</strong> The interactive labs (Query Boundaries, Token Validation, Safe Reflection) run in your browser with a built-in request editor.</li>
@@ -34,17 +48,18 @@
         <li><strong>Progress is local.</strong> It lives in this browser only. It is not a score or an identity.</li>
       </ul>
     </section>
-    <section class="panel lab-panel-shell" aria-label="Lab filters and exercises">
+    <section id="catalog" class="panel lab-panel-shell" aria-label="Lab filters and exercises" data-reveal>
       <header><p class="prompt-line">visitor@labs:~$ find . -type f</p><h2>// LEARNING LABS</h2></header>
       <div class="toolbar" aria-label="Lab filters">
         <label>Search <input id="search" type="search" placeholder="Search labs"></label>
         <label>Category <select id="category"><option value="">All categories</option></select></label>
-        <p id="progress" aria-live="polite"></p>
+        <div class="progress-block"><p id="progress" aria-live="polite"></p><div class="progress-bar" aria-hidden="true"><span id="progress-fill"></span></div></div>
         <button id="reset-progress" class="button quiet" type="button">RESET PROGRESS</button>
       </div>
       <section id="lab-grid" class="lab-grid" aria-live="polite"></section>
     </section>
   </main>
+  <footer class="site-footer"><span>© Naven Tran</span><span>Simulations only. Authorized, legal learning.</span></footer>
   <dialog id="lab-dialog" class="lab-dialog" aria-labelledby="dialog-title">
     <div class="dialog-head"><div><p id="dialog-category" class="prompt-line"></p><h2 id="dialog-title"></h2></div><button id="close-dialog" class="icon-button" type="button" aria-label="Close lab">×</button></div>
     <div id="lab-content"></div>

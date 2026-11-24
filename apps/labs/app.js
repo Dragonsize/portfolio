@@ -12,7 +12,7 @@ const dialog = document.querySelector('#lab-dialog');
 const content = document.querySelector('#lab-content');
 const toast = document.querySelector('#toast');
 const themeToggle = document.querySelector('#theme-toggle');
-function initialTheme() { try { const saved = localStorage.getItem('labs-theme'); if (saved === 'dark' || saved === 'light') return saved; } catch {} return 'light'; }
+function initialTheme() { try { const saved = localStorage.getItem('labs-theme'); if (saved === 'dark' || saved === 'light') return saved; } catch {} return matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'; }
 function applyTheme(theme, persist = false) { document.documentElement.dataset.theme = theme; themeToggle.textContent = `[ theme: ${theme} ]`; themeToggle.setAttribute('aria-pressed', String(theme === 'dark')); themeToggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`); if (persist) try { localStorage.setItem('labs-theme', theme); } catch {} document.dispatchEvent(new Event('labs-themechange')); }
 themeToggle.addEventListener('click', () => applyTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
 applyTheme(initialTheme());
@@ -36,6 +36,21 @@ function showToast(message) {
 
 function renderProgress() {
   progress.textContent = `${store.count()} / ${CHALLENGES.length} labs completed locally`;
+  document.querySelector('.progress-bar')?.style.setProperty('--p', String(Math.round((store.count() / CHALLENGES.length) * 100)));
+}
+
+function renderStats() {
+  document.querySelector('#stat-total').textContent = String(CHALLENGES.length);
+  document.querySelector('#stat-live').textContent = String(CHALLENGES.filter((challenge) => challenge.interactive).length);
+}
+
+function initReveal() {
+  const targets = document.querySelectorAll('[data-reveal]');
+  if (!('IntersectionObserver' in window)) { targets.forEach((node) => node.classList.add('in')); return; }
+  const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+    if (entry.isIntersecting) { entry.target.classList.add('in'); observer.unobserve(entry.target); }
+  }), { threshold: 0.08 });
+  targets.forEach((node) => observer.observe(node));
 }
 
 function renderFilters() {
@@ -65,9 +80,11 @@ function renderGrid() {
     const head = el('div', 'card-head');
     const heading = el('div');
     heading.append(el('p', 'eyebrow', challenge.category), el('h2', '', challenge.title));
-    head.append(heading, el('span', 'tag', solved ? 'Completed' : challenge.difficulty));
+    head.append(heading);
+    if (solved) head.append(el('span', 'tag done', 'Completed ✓'));
     const tags = el('div', 'tags');
-    tags.append(el('span', 'tag', `${challenge.minutes} min`), el('span', 'tag', challenge.difficulty));
+    tags.append(el('span', `tag diff-${challenge.difficulty.toLowerCase()}`, challenge.difficulty), el('span', 'tag', `${challenge.minutes} min`));
+    if (challenge.interactive) tags.append(el('span', 'tag live', 'request-driven'));
     const button = el('button', 'button', solved ? 'Review lab' : 'Open lab');
     button.type = 'button';
     button.addEventListener('click', () => openLab(challenge.id, button));
@@ -197,4 +214,4 @@ document.querySelector('#reset-progress').addEventListener('click', () => {
   if (!window.confirm('Clear locally saved lab completion?')) return;
   store.reset(); renderProgress(); renderGrid(); showToast('Local lab progress cleared.');
 });
-renderFilters(); renderProgress(); renderGrid();
+renderFilters(); renderStats(); renderProgress(); renderGrid(); initReveal();

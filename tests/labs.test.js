@@ -46,7 +46,10 @@ test('Labs shell exposes Portfolio navigation, favicon, and theme modes', async 
     readFile(new URL('../apps/labs/styles.css', import.meta.url), 'utf8'),
     readFile(new URL('../apps/labs/app.js', import.meta.url), 'utf8')
   ]);
-  assert.match(html, /<html lang="en" data-theme="light">/);
+  assert.match(html, /<html lang="en" data-theme="dark">/);
+  assert.match(html, /<script src="theme-init\.js"><\/script>/);
+  assert.match(css, /:root\[data-theme=light\]/);
+  assert.match(app, /prefers-color-scheme: light/);
   assert.match(html, /href="naven-mark-transparent\.png" type="image\/png"/);
   assert.match(html, /href="https:\/\/naventran\.vercel\.app\/"/);
   assert.match(html, /<a href="\/" aria-current="page">LABS<\/a>/);
@@ -60,4 +63,28 @@ test('Labs shell exposes Portfolio navigation, favicon, and theme modes', async 
   assert.match(css, /#lab-signal-field\{display:none\}/);
   assert.match(app, /initLabAmbient\(\)/);
   assert.match(app, /new Event\('labs-themechange'\)/);
+});
+
+test('pages never use inline scripts, which the production CSP (script-src self) would block', async () => {
+  for (const page of ['../apps/labs/index.html', '../apps/portfolio/index.html', '../apps/portfolio/404.html']) {
+    const html = await readFile(new URL(page, import.meta.url), 'utf8');
+    assert.doesNotMatch(html, /<script(?![^>]*\ssrc=)[^>]*>/i, `${page} has an inline <script>`);
+    assert.doesNotMatch(html, /\son[a-z]+="/i, `${page} has an inline event handler`);
+  }
+});
+
+test('theme bootstrap applies saved or system theme and the js class', async () => {
+  const source = await readFile(new URL('../apps/labs/theme-init.js', import.meta.url), 'utf8');
+  const run = (stored, prefersLight) => {
+    const classes = new Set();
+    const root = { dataset: {}, classList: { add: (name) => classes.add(name) } };
+    const context = { document: { documentElement: root }, localStorage: { getItem: () => stored }, window: { matchMedia: () => ({ matches: prefersLight }) } };
+    new Function('document', 'localStorage', 'window', source)(context.document, context.localStorage, context.window);
+    return { theme: root.dataset.theme, js: classes.has('js') };
+  };
+  assert.deepEqual(run('light', false), { theme: 'light', js: true });
+  assert.deepEqual(run('dark', true), { theme: 'dark', js: true });
+  assert.equal(run(null, true).theme, 'light');
+  assert.equal(run(null, false).theme, 'dark');
+  assert.equal(run('garbage', false).theme, 'dark');
 });
