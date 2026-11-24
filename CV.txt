@@ -135,8 +135,8 @@
 \Large{Tran Thanh Phat (Naven)}\\[4pt]
 \href{https://github.com/Dragonsize}{\raisebox{-0.05\height}\faGithub\ Github} \ $|$ \
 \href{https://www.linkedin.com/in/navensol/}{\raisebox{-0.05\height}\faGithub\ LinkedIn} \ $|$ \
-\href{mailto:tranphate@gmail.com}{\raisebox{-0.05\height}\faEnvelope \ tranphate@gmail.com} \ $|$ \
-\href{tel:0842609007}{\raisebox{-0.05\height}\faMobile \ 0842609007}\\
+\href{mailto:tranphate@gmail.com}{\raisebox{-0.05\height}\faEnvelope \ tranphate@gmail.com}
+
 \end{tabularx}
 
 %----------------------------------------------------------------------------------------

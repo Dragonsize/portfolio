@@ -27,7 +27,9 @@ test('random pulses align to dot grid and remain in viewport', () => {
 });
 
 test('branch probability uses a 70 percent threshold', () => {
-  const branching = createPulse(1280, 800, sequence([.5, 0, 0, .699]));
+  // Calls 1-3 build the root, call 4 (.699) forks it, calls 5-7 pick fork/child lengths,
+  // and calls 8-9 (.7) are the children's own branch decisions, which must not branch.
+  const branching = createPulse(1280, 800, sequence([.5, 0, 0, .699, 0, 0, 0, .7, .7]));
   const noBranching = createPulse(1280, 800, sequence([.5, 0, 0, .7]));
   assert.equal(branching.segments.length, 3);
   assert.equal(noBranching.segments.length, 1);

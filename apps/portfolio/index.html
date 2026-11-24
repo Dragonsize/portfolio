@@ -5,49 +5,92 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="index,follow">
   <meta name="color-scheme" content="dark light">
-  <meta name="description" content="Naven Tran's cybersecurity portfolio and public projects.">
-  <title>Dragonsize — Portfolio</title>
+  <meta name="description" content="Naven Tran: cybersecurity-focused Computer Science student. Python security tools, CTFs, and interactive security labs.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Naven Tran | Cybersecurity Portfolio">
+  <meta property="og:description" content="Python security tools, CTF results, and interactive web-security labs.">
+  <title>Naven Tran | Cybersecurity Portfolio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
   <link rel="icon" href="naven-mark-transparent.png" type="image/png">
   <link rel="stylesheet" href="styles.css">
-<link rel="stylesheet" href="animations.css">
 </head>
 <body>
-  <div class="ambient-visual" aria-hidden="true">
-    <canvas id="signal-field"></canvas>
-  </div>
   <a class="skip-link" href="#main">Skip to content</a>
+
   <header class="site-header">
-    <nav class="nav" aria-label="Primary navigation">
-      <a class="brand" href="#about" aria-label="Naven portfolio"><img src="naven-mark-transparent.png" alt="Naven"></a>
-      <div class="nav-links"><a href="#about">[01] About</a><a href="#skills">[02] Skills</a><a href="#projects">[03] Projects</a><a href="#ctf">[04] CTF</a><a href="#certs">[05] Certs</a><a href="#contact">[06] Contact</a></div>
-      <div class="header-actions"><button id="theme-toggle" class="theme-toggle" type="button" aria-pressed="true" aria-label="Switch to light theme">[ theme: dark ]</button><button id="open-terminal" class="terminal-trigger" type="button" aria-controls="terminal-drawer" aria-expanded="false">[ terminal ~ ]</button></div>
+    <a class="brand" href="#top" aria-label="Naven Tran, home"><img src="naven-mark-transparent.png" alt="" width="26" height="30"><span>naven<b>@</b>portfolio</span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#projects">[01] Projects</a><a href="#record">[02] Record</a><a href="#stack">[03] Stack</a><a href="#contact">[04] Contact</a>
     </nav>
+    <div class="header-actions">
+      <button id="theme-toggle" class="chip-btn" type="button" aria-label="Switch to light theme">[ theme: dark ]</button>
+      <button id="open-terminal" class="chip-btn" type="button" aria-controls="terminal-drawer" aria-expanded="false" title="Terminal (press `)">[ terminal ~ ]</button>
+    </div>
   </header>
+
   <main id="main">
-    <section id="about" class="hero section" data-motion="hero">
-      <div class="hero-copy" data-depth="copy">
-        <p class="prompt-line">visitor@portfolio:~$ whoami</p>
-        <pre class="ascii" aria-hidden="true">+------------------------------+
-|  C Y B E R S E C U R I T Y   |
-|       P O R T F O L I O      |
-+------------------------------+</pre>
-        <h1 id="identity-name">Naven Tran</h1><p id="identity-role" class="lime">Cybersecurity-focused Computer Science student</p><p id="identity-summary" class="muted">Computer Science student focused on cybersecurity, building Python security tools and completing hands-on labs.</p><p id="identity-availability">Contact through verified public channels below.</p>
-        <div class="actions"><a class="button" href="#projects">&gt; VIEW PROJECTS</a><a id="labs-link" class="button quiet" href="https://labs-naventran.vercel.app/" target="_blank" rel="noopener noreferrer">&gt; OPEN LEARNING LABS</a></div>
+    <section id="top" class="hero">
+      <canvas id="net-globe" role="img" aria-label="Interactive wireframe network globe. Click it to run a simulated scan."></canvas>
+
+      <div class="hero-copy">
+        <p class="prompt">visitor@portfolio:~$ whoami</p>
+        <h1 data-scramble>Naven Tran</h1>
+        <p class="typed" aria-live="off"><span class="gt">&gt;</span> <span id="typed-line">securing systems, one packet at a time</span><span class="caret" aria-hidden="true">_</span></p>
+        <p id="identity-summary" class="hero-text"></p>
+        <div class="hero-actions">
+          <a class="btn solid" href="#projects">&gt; view projects</a>
+          <a id="labs-link" class="btn" href="https://labs-naventran.vercel.app/" target="_blank" rel="noopener noreferrer">&gt; open learning labs ↗</a>
+        </div>
+        <div class="scan-panel" aria-live="polite"><span class="pulse" aria-hidden="true"></span><span id="scan-status">[ scan ] idle · click the globe</span></div>
       </div>
-      <section class="terminal-frame hero-terminal" data-depth="terminal" aria-label="Static identity preview"><header>naven@portfolio: ~/intro</header><div id="hero-transcript" class="transcript"></div></section>
+
+      <div class="signal-ticker" aria-label="Focus areas">
+        <span class="ticker-label">signal:</span>
+        <div class="ticker-window"><div id="ticker-track" class="ticker-track"></div></div>
+      </div>
     </section>
-    <section class="signal-ticker" aria-label="Portfolio focus"><span class="ticker-label">signal:</span><span id="ticker-summary" class="ticker-summary"></span><div id="ticker-track" class="ticker-track" aria-hidden="true"></div></section>
-    <section id="skills" class="section panel" data-reveal><header><p class="prompt-line">visitor@portfolio:~/skills$ ls -la</p><h2>// TECHNICAL SKILLS</h2><p class="muted">Security tooling, web testing, and systems development.</p></header><div id="skill-tabs" class="tabs" role="tablist" aria-label="Skill categories"></div><div id="skill-panel" class="skill-panel"></div></section>
-    <section id="projects" class="section panel" data-reveal><header><p class="prompt-line">visitor@portfolio:~/projects$ find . -type f</p><h2>// PROJECTS</h2></header><div id="project-grid" class="grid"></div></section>
-    <section id="ctf" class="section panel" data-reveal><header><p class="prompt-line">visitor@portfolio:~/ctf$ cat results.log</p><h2>// CTF &amp; COMPETITIONS</h2></header><div class="table-wrap"><table><thead><tr><th>Competition</th><th>Result</th><th>Year</th></tr></thead><tbody id="competition-table-body"></tbody></table></div></section>
-    <section id="certs" class="section panel" data-reveal><header><p class="prompt-line">visitor@portfolio:~/certs$ ls ./credentials</p><h2>// CERTIFICATIONS &amp; EXPERIENCE</h2></header><div id="cert-grid" class="grid certs"></div><ol id="experience-list" class="timeline"></ol></section>
-    <section id="contact" class="section panel" data-reveal><header><p class="prompt-line">visitor@portfolio:~/contact$ ls -la</p><h2>// CONTACT</h2><p class="muted">Public channels.</p></header><nav class="breadcrumbs" aria-label="Breadcrumb"><a href="#about">[00] Home</a><span aria-hidden="true">/</span><a href="#contact">[06] Contact</a></nav><div id="contact-links" class="grid contacts"></div><section class="response-promise" aria-label="Response time"><h3>// RESPONSE TIME</h3><p>Replies within <strong>48 hours</strong> via verified public channels. Security questions welcome — keep all requests legal and authorized.</p></section><section class="faq" aria-label="Frequently asked questions"><h3>// FAQ</h3><details><summary>What kind of work do you do?</summary><p>Cybersecurity-focused development: Python security tooling, web security testing in legal labs, and CTF practice. All shown work is for authorized, educational use only.</p></details><details><summary>Can I hire or collaborate with you?</summary><p>Yes — reach out through the public channels above. Student-friendly, open to learning projects and internships.</p></details><details><summary>Do you take private/sensitive engagements?</summary><p>No unauthorized testing. Contact is for discussion only; no credentials or payment details are handled on this site.</p></details></section></section>
+
+    <section id="projects" class="section" data-reveal>
+      <header class="sec-head"><p class="prompt">visitor@portfolio:~/projects$ find . -type f</p><h2>// Projects</h2></header>
+      <ol id="project-list" class="project-list"></ol>
+    </section>
+
+    <section id="record" class="section" data-reveal>
+      <header class="sec-head"><p class="prompt">visitor@portfolio:~/record$ cat results.log</p><h2>// Record</h2></header>
+      <div id="stats" class="stats"></div>
+      <div class="record-cols">
+        <div><h3 class="col-label">experience</h3><ol id="experience-list" class="log"></ol><h3 class="col-label">competitions</h3><ol id="competition-list" class="log"></ol></div>
+        <div><h3 class="col-label">certifications</h3><ul id="cert-list" class="log"></ul><h3 class="col-label">education</h3><ul id="education" class="log"></ul></div>
+      </div>
+    </section>
+
+    <section id="stack" class="section" data-reveal>
+      <header class="sec-head"><p class="prompt">visitor@portfolio:~/stack$ ls -la</p><h2>// Stack</h2></header>
+      <div id="skill-grid" class="skill-grid"></div>
+    </section>
+
+    <section id="contact" class="section" data-reveal>
+      <header class="sec-head"><p class="prompt">visitor@portfolio:~/contact$ ping naven</p><h2>// Contact</h2></header>
+      <p class="contact-lead">Open to internships, collaborations and learning projects. Replies within 48 hours.</p>
+      <a id="contact-email" class="contact-email" href="mailto:tranphate@gmail.com">tranphate@gmail.com</a>
+      <div id="contact-links" class="contact-links"></div>
+      <div class="faq">
+        <details><summary>What kind of work do you do?</summary><p>Cybersecurity-focused development: Python security tooling, web security testing in legal labs, and CTF practice. All work shown is for authorized, educational use.</p></details>
+        <details><summary>Can I hire or collaborate with you?</summary><p>Yes. I take freelance web and tooling projects and am open to internships. Reach out through any channel above.</p></details>
+        <details><summary>Do you take private or sensitive engagements?</summary><p>No unauthorized testing. Contact is for discussion only, and this site never handles credentials or payment details.</p></details>
+      </div>
+    </section>
   </main>
-  <footer><span id="footer-notice">Security work shown for authorized, legal learning only.</span></footer>
-  <aside id="terminal-drawer" class="terminal-drawer" aria-labelledby="terminal-title" aria-hidden="true" inert><header class="terminal-drawer-header"><span id="terminal-title">portfolio terminal</span><button id="close-terminal" type="button" aria-label="Close terminal">×</button></header><div id="terminal-output" role="log" aria-label="Terminal output" aria-live="polite" aria-relevant="additions" aria-atomic="false" tabindex="0"></div><form id="terminal-form"><label for="terminal-input">visitor@portfolio:~$</label><input id="terminal-input" autocomplete="off" spellcheck="false" autocapitalize="off"></form></aside>
+
+  <footer class="footer"><span>© Naven Tran</span><span>Security work shown for authorized, legal learning only.</span></footer>
+
+  <aside id="terminal-drawer" class="terminal-drawer" aria-labelledby="terminal-title" aria-hidden="true" inert>
+    <header class="terminal-head"><span class="term-dots" aria-hidden="true"><i></i><i></i><i></i></span><span id="terminal-title">visitor@naven: ~ (nsh)</span><button id="close-terminal" type="button" aria-label="Close terminal">×</button></header>
+    <div id="terminal-output" role="log" aria-label="Terminal output" aria-live="polite" tabindex="0"></div>
+    <form id="terminal-form"><label id="terminal-prompt" for="terminal-input">visitor@naven:~$</label><input id="terminal-input" autocomplete="off" spellcheck="false" autocapitalize="off" aria-label="Terminal command"></form>
+  </aside>
   <script type="module" src="app.js"></script>
 </body>
 </html>

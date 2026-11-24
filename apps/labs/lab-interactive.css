@@ -1,0 +1,64 @@
+/* Styles for the request-driven labs and the rules panel. Uses the theme variables from styles.css. */
+.rules{margin-bottom:2.5rem}
+.rules ul{margin:0;padding-left:1.2rem;display:grid;gap:.6rem;color:var(--muted);font-size:.82rem}
+.rules strong{color:var(--text)}
+.rules code,.ilab code{padding:.05rem .3rem;background:var(--raised);border:1px solid var(--border);font-size:.78rem}
+
+.lab-dialog.wide{width:min(1060px,calc(100% - 1.5rem));max-height:calc(100dvh - 2rem);overflow:auto}
+.ilab{gap:1.4rem}
+.ilab .story{margin:0;color:var(--text)}
+.ilab .goal{margin:0;color:var(--accent);font-weight:700}
+.ilab-section{display:grid;gap:.7rem;padding-top:1rem;border-top:1px solid var(--border)}
+.ilab-section>h3{margin:0;font-size:.82rem;color:var(--meta)}
+.ilab-section>h3::before{content:'// ';color:var(--muted)}
+.muted-note{margin:0;color:var(--muted);font-size:.78rem}
+
+.app-pane{display:grid;gap:.7rem;padding:.9rem;border:1px dashed var(--border-strong);background:var(--surface)}
+.app-form .form-row{align-items:stretch}
+.app-form .lab-input{width:100%}
+.field{display:grid;gap:.25rem}
+.field-label{margin:0;color:var(--muted);font-size:.7rem}
+.token-grid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.token-grid .field:last-child{grid-column:1/-1}
+
+.query-inspector{margin:0;padding:.8rem;background:var(--page);border:1px solid var(--border);font-size:.76rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.query-inspector .qi-label{color:var(--meta)}
+.query-inspector mark{background:var(--accent);color:var(--accent-contrast);padding:0 .15rem}
+.app-error{margin:0;padding:.6rem .8rem;border:1px solid var(--meta);color:var(--meta);font-size:.78rem}
+.data-table{width:100%;border-collapse:collapse;font-size:.76rem}
+.data-table th,.data-table td{padding:.5rem .6rem;text-align:left;border-bottom:1px solid var(--border);overflow-wrap:anywhere}
+.data-table th{color:var(--meta);font-weight:500}
+.results-page{padding:.8rem;border:1px solid var(--border);background:var(--page)}
+.results-title{margin:0 0 .4rem;color:var(--muted);font-size:.7rem}
+.results-body{margin:0;font-size:.85rem;overflow-wrap:anywhere}
+.facts{margin:.5rem 0 0;padding-left:1.1rem;color:var(--muted);font-size:.76rem}
+.alert-box{margin:.5rem 0 0;padding:.7rem .8rem;border:1px solid var(--accent);background:var(--raised);color:var(--text);font-size:.78rem;overflow-wrap:anywhere}
+.app-out{display:grid;gap:.6rem}
+.token-view{max-height:6rem}
+
+.repeater{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.rr-col{display:grid;gap:.5rem;align-content:start;min-width:0}
+.raw-request{width:100%;min-height:9rem;padding:.7rem;background:var(--page);color:var(--text);border:1px solid var(--border);border-radius:0;font:.76rem/1.5 var(--mono);resize:vertical}
+.raw-request.small{min-height:4.5rem}
+.raw-response{min-height:9rem;max-height:20rem}
+
+.hint-list{margin:0;padding-left:1.2rem;display:grid;gap:.4rem;color:var(--muted);font-size:.8rem}
+.hint-list:empty{display:none}
+.burp{border:1px solid var(--border);padding:.2rem .8rem;background:var(--surface)}
+.burp summary{cursor:pointer;padding:.5rem 0;font-size:.8rem;color:var(--accent)}
+.burp ol{margin:.2rem 0 .8rem;padding-left:1.2rem;display:grid;gap:.35rem;color:var(--muted);font-size:.78rem}
+.flag-message{margin:0;color:var(--accent);font-size:.78rem}
+.lab-form.done .lab-input{border-color:var(--accent)}
+
+.patch-group{display:grid;gap:.6rem}
+.patch-option{display:flex;gap:.7rem;align-items:flex-start;padding:.7rem;border:1px solid var(--border);background:var(--surface);cursor:pointer}
+.patch-option:hover,.patch-option:has(input:checked){border-color:var(--accent)}
+.patch-option strong{font-size:.8rem}
+.patch-option .code{margin:.4rem 0 0;padding:.5rem .6rem;background:var(--page);border:1px solid var(--border);font-size:.72rem;white-space:pre-wrap;overflow-wrap:anywhere}
+.replay-box{display:grid;gap:.6rem}
+.output.blocked{border-color:var(--accent)}
+.link-list{margin:0;padding-left:1.2rem;display:grid;gap:.3rem;font-size:.8rem}
+
+@media(max-width:760px){
+  .repeater,.token-grid{grid-template-columns:1fr}
+}

@@ -5,7 +5,7 @@ import { CHALLENGES, challengeById } from '../apps/labs/shared/challenge-registr
 import { knownChallenge, runScenario, verifyFlag } from '../apps/labs/api/_lib/lab-scenarios.js';
 
 const solveInputs = {
-  sqli: "42' OR '1'='1", xss: '<demo>', csrf: 'cross-site POST without token', jwt: 'alg=none', auth: 'default access enabled', path: '../virtual://private', ssrf: 'lab://internal/catalog', secrets: 'diagnostic output enabled'
+  csrf: 'cross-site POST without token', auth: 'default access enabled', path: '../virtual://private', ssrf: 'lab://internal/catalog', secrets: 'diagnostic output enabled'
 };
 
 test('registry has eight unique valid challenge routes', () => {
@@ -17,8 +17,8 @@ test('registry has eight unique valid challenge routes', () => {
   });
 });
 
-test('each simulator yields controlled evidence and a verifier-only flag', () => {
-  for (const challenge of CHALLENGES) {
+test('each keyword simulator yields controlled evidence and a verifier-only flag', () => {
+  for (const challenge of CHALLENGES.filter((item) => !item.interactive)) {
     const initial = runScenario(challenge.id, 'ordinary observation');
     assert.equal(initial.challengeId, challenge.id);
     assert.equal(initial.flag, undefined);
@@ -33,12 +33,6 @@ test('each simulator yields controlled evidence and a verifier-only flag', () =>
 test('only registered scenarios are recognized', () => {
   assert.equal(knownChallenge('unknown'), false);
   assert.equal(runScenario('unknown', 'anything'), null);
-});
-
-test('XSS simulator returns escaped fixture text, not executable HTML', () => {
-  const result = runScenario('xss', '<script>demo</script>');
-  assert.equal(result.artifact.escapedPreview.includes('<script>'), false);
-  assert.match(result.artifact.escapedPreview, /&lt;script&gt;/);
 });
 
 test('SSRF simulator confirms no outbound request occurred', () => {

@@ -38,8 +38,10 @@ Thumbs.db
 !.vscode/extensions.json
 !.vscode/settings.json
 
-# Claude local state and temporary worktrees
+# Claude local state and repository-specific instructions
 .claude/settings.local.json
+.claude/worktrees/
+CLAUDE.md
 .claude/worktrees/
 
 # Local frontend design-template reference

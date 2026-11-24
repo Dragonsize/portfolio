@@ -1,6 +1,7 @@
 import { CHALLENGES, challengeById } from './shared/challenge-registry.js';
 import { ProgressStore } from './shared/progress-store.js';
 import { initLabAmbient } from './ambient-pulse.js';
+import { renderInteractiveLab } from './interactive-ui.js';
 
 const store = new ProgressStore(CHALLENGES.map(({ id }) => id));
 const grid = document.querySelector('#lab-grid');
@@ -108,6 +109,16 @@ function openLab(id, opener) {
   document.querySelector('#dialog-title').textContent = activeChallenge.title;
   document.querySelector('#dialog-category').textContent = `${activeChallenge.category} · ${activeChallenge.difficulty}`;
   content.replaceChildren();
+  dialog.classList.toggle('wide', Boolean(activeChallenge.interactive));
+  if (activeChallenge.interactive) {
+    const intro = el('div', 'lab-panel');
+    intro.append(el('p', '', activeChallenge.description), list('Learning goals', activeChallenge.objectives), list('Defensive outcome', activeChallenge.remediation));
+    const challenge = activeChallenge;
+    content.append(intro, renderInteractiveLab(challenge, { submitFlag: (flag) => submitInteractiveFlag(challenge, flag), alreadySolved: store.has(challenge.id) }));
+    dialog.showModal();
+    content.querySelector('input, textarea, button')?.focus();
+    return;
+  }
   const panel = el('div', 'lab-panel');
   panel.append(el('p', '', activeChallenge.description), list('Learning goals', activeChallenge.objectives), list('Defensive outcome', activeChallenge.remediation));
   const form = el('form', 'lab-form');
@@ -154,6 +165,20 @@ function addSubmission(container, challenge, discoveredFlag) {
   container.append(form);
 }
 
+async function submitInteractiveFlag(challenge, flag) {
+  if (!flag) return { ok: false, message: 'Paste the flag you found first.' };
+  let response, data;
+  try {
+    response = await fetch('/api/lab-submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ challengeId: challenge.id, flag }) });
+    data = await response.json();
+  } catch { return { ok: false, message: 'Network error. Try again.' }; }
+  if (!response.ok) return { ok: false, message: data.error?.message || 'Validation failed.' };
+  store.markSolved(challenge.id);
+  renderProgress(); renderGrid();
+  showToast(`${challenge.title} marked complete on this browser.`);
+  return { ok: true, message: 'Flag accepted. Now fix the bug below.' };
+}
+
 function closeDialog() { dialog.close(); dialogOpener?.focus(); }
 
 document.querySelector('#close-dialog').addEventListener('click', closeDialog);
@@ -161,7 +186,7 @@ dialog.addEventListener('click', (event) => { if (event.target === dialog) close
 dialog.addEventListener('cancel', (event) => { event.preventDefault(); closeDialog(); });
 dialog.addEventListener('keydown', (event) => {
   if (event.key !== 'Tab') return;
-  const nodes = [...dialog.querySelectorAll('button,input')].filter((node) => !node.disabled);
+  const nodes = [...dialog.querySelectorAll('button,input,textarea,select,summary,a[href]')].filter((node) => !node.disabled && node.offsetParent !== null);
   const first = nodes[0]; const last = nodes.at(-1);
   if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
   if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
